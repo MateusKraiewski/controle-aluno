@@ -7,7 +7,7 @@
 - Cliente: Codex Desktop. Sem alteração de modelo, autenticação, preferências globais ou permissões.
 - Runtime verificado: Node.js 24.18.0 e npm 11.16.0.
 - Produto: perfil aluno primeiro; web responsivo mobile first; professor previsto para fase posterior.
-- Repositório local inicializado sem remoto; nenhum commit/publicação foi feito.
+- Repositório GitHub `MateusKraiewski/controle-aluno`, branch `main`; commit inicial `438897d` enviado. A cópia local acompanha `origin/main`.
 
 ## Decisões e fontes
 
