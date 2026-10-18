@@ -1,5 +1,13 @@
 # Aula em Dia
 
+## Progresso de entrega
+
+**Estimativa atual: 38%**. É uma estimativa ponderada por marcos do produto (visão 20%, agenda do aluno 40%, colaboração com professor 20%, apoio à aprendizagem 10%, qualidade e lançamento 10%), não uma declaração de que a aplicação está pronta para produção. O cálculo e as pendências estão detalhados em [progresso do projeto](docs/progress.md).
+
+[████████████████████](docs/progress.md#product-and-architecture-20) [████████████████░░░░░░░░░░░░░░░░░░░░░░](docs/progress.md#student-planner-40) [░░░░░░░░░░░░░░░░░░░░](docs/progress.md#teacher-collaboration-20) [░░░░░░░░░░](docs/progress.md#learning-support-10) [██░░░░░░░░](docs/progress.md#quality-and-release-10)
+
+Cada segmento da barra abre a etapa correspondente. O roadmap também mostra o que já existe e o que falta.
+
 Plataforma mobile first para organizar a relação entre aula planejada, aula realizada, presença, conteúdo estudado e trajetória por matéria. Aluno é a primeira experiência; o produto está sendo estruturado para colaboração com professor por vínculo consentido e autoria separada.
 
 ## Rodar localmente
