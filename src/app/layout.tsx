@@ -7,7 +7,8 @@ export const metadata: Metadata = {
   description: "Organize suas aulas, matérias e histórico de estudos.",
   applicationName: "Aula em Dia",
   manifest: "/manifest.webmanifest",
-  icons: { icon: "/icon.svg", apple: "/icon.svg" },
+  // Let iOS prefer the standalone-capable manifest icon when adding to Home Screen.
+  icons: { icon: "/icon.svg" },
   appleWebApp: { capable: true, title: "Aula em Dia", statusBarStyle: "default" },
 };
 

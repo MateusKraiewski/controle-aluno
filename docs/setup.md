@@ -12,7 +12,10 @@
 ## Decisões e fontes
 
 - Bootstrap Next.js pelo toolkit. A versão instalada pelo scaffold é Next.js 16.4.2; canal estável observado no pacote, sem adoção de canary.
-- PostgreSQL + Drizzle escolhido; serviço local PostgreSQL 17 está ativo. A conexão TCP local recusou autenticação sem senha (`psql -h 127.0.0.1 -U postgres -w`), e nenhuma credencial foi encontrada no projeto. Schema e migração inicial foram gerados; migração não aplicada. Nenhum serviço externo foi selecionado.
+- PostgreSQL + Drizzle escolhido; serviço local PostgreSQL 17 está ativo. A conexão TCP local recusou autenticação sem senha (`psql -h 127.0.0.1 -U postgres -w`), e nenhuma credencial foi encontrada no projeto. Schema de domínio e Better Auth estão preparados; migrações ainda não foram aplicadas. Nenhum serviço externo foi selecionado.
+- Better Auth 1.7.10 e `@better-auth/drizzle-adapter` 1.7.10 instalados; email/senha e rota Next configurados. A página `/entrar` usa o cliente real e informa que falta conexão ao banco.
+- Idiomas da interface: pt-BR, pt-PT, inglês e espanhol. Tema claro/escuro. Preferências não pessoais ficam em `localStorage` sob chave versionada; dados de aula não.
+- Instalação iOS: manifesto PWA `standalone` e metadados Apple; Safari > Compartilhar > Adicionar à Tela de Início, sem App Store.
 - Skills da coleção Vercel selecionadas para Codex e copiadas localmente no Windows. React Native/Expo não instalado: plataforma decidida como web responsiva nesta etapa.
 - Context7 adicionado em `.codex/config.toml` por não haver servidor ativo no inventário `codex mcp list`; consulta real e aprovação de confiança do projeto continuam pendentes.
 - `.graphifyignore` foi configurado. O comando `graphify`, RTK e os plugins Ponytail/Caveman/Superpowers não estão disponíveis neste ambiente e não foram instalados globalmente.
@@ -48,7 +51,7 @@
 | Prévia em desenvolvimento | Em execução | `npm run dev -- --hostname 127.0.0.1 --port 3000` (o script usa Webpack); a página `/` está aberta no navegador embutido do Codex; histórico demonstrativo ganhou filtros de busca/matéria/período e o manifesto PWA foi ligado ao layout |
 | Next MCP local | Consultado | `/_next/mcp`: `get_errors` retornou sem erros de configuração/sessão; `get_routes` listou `/` e `/favicon.ico` |
 | Lint/tipos/build | Pendente | Não executados nesta etapa |
-| Banco/SQL | Schema/migração preparados | `src/db/schema/index.ts`; arquivo em `drizzle/`; aplicação bloqueada pela senha ainda não configurada; autenticação/autorização ainda pendentes |
+| Banco/SQL | Schema/migrações preparados | `src/db/schema/` e SQL em `drizzle/`; aplicação bloqueada pela senha ainda não configurada; fluxos de aula ainda demonstrativos |
 | Discovery Codex de skills | Listado pelo CLI | `npx skills@latest list --agent codex --json`; nova sessão ainda não observada |
 | Memory/context retrieval | Configurado sem execução | Documentação canônica em `PRODUCT.md`, `AGENTS.md` e `docs/`; Codex carrega AGENTS no projeto; retrieval de sessão limpa não observado |
 | Auditoria de dependências | Validada | `npm audit`: 9 vulnerabilidades de desenvolvimento (5 altas, 4 moderadas); `npm audit --omit=dev`: 0. As correções sugeridas exigem downgrade major do `eslint-config-next`/`drizzle-kit`; não aplicadas automaticamente |
@@ -59,4 +62,4 @@ Não foi criada memória externa; decisões duráveis ficam nos documentos versi
 
 ## Pendências e próxima entrega
 
-Seguir iterando com a prévia local aberta. O preflight recomendado pela versão instalada difere dos nomes de ferramentas disponíveis na versão 16.4.2 do servidor Next MCP; foram consultados `get_errors` e `get_routes`. Antes de gravar dados reais, selecionar provedor, autenticação e regras de acesso. Nenhuma publicação ou integração externa foi feita.
+Seguir iterando com a prévia local aberta. O preflight recomendado pela versão instalada difere dos nomes de ferramentas disponíveis na versão 16.4.2 do servidor Next MCP; foram consultados `get_errors` e `get_routes`. Para persistir dados reais, configurar DATABASE_URL e BETTER_AUTH_SECRET, aplicar as migrações e proteger cada leitura/escrita com a sessão autenticada. Código publicado no repositório GitHub solicitado pelo usuário; nenhum banco hospedado foi conectado.

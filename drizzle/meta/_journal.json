@@ -15,6 +15,20 @@
       "when": 1792350178863,
       "tag": "0001_tiresome_pet_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792350769942,
+      "tag": "0002_third_kulan_gath",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792350986713,
+      "tag": "0003_safe_sugar_man",
+      "breakpoints": true
     }
   ]
 }

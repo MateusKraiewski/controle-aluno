@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { localeOptions, type Locale, translate } from "@/lib/locales";
+import { loadUiPreferences, saveUiPreferences, type Theme } from "@/lib/preferences";
 
 type View = "overview" | "calendar" | "history" | "subjects";
 type Status = "upcoming" | "attended" | "student-absent" | "teacher-absent";
 type Lesson = { id: string; subject: string; date: Date; time: string; topic: string; teacher: string; status: Status };
 
-const labels: Record<Status, string> = { upcoming: "Agendada", attended: "Presença", "student-absent": "Faltei", "teacher-absent": "Professor faltou" };
+const statusLabels: Record<Status, string> = { upcoming: "Agendada", attended: "Presença", "student-absent": "Faltei", "teacher-absent": "Professor faltou" };
 const navItems: { id: View; label: string; icon: string }[] = [
   { id: "overview", label: "Visão geral", icon: "⌂" }, { id: "calendar", label: "Calendário", icon: "▦" },
   { id: "history", label: "Meu histórico", icon: "▤" }, { id: "subjects", label: "Matérias", icon: "▱" },
@@ -28,42 +30,47 @@ function demoLessons(): Lesson[] {
   ];
 }
 
-function formatDate(date: Date, options: Intl.DateTimeFormatOptions) { return new Intl.DateTimeFormat("pt-BR", options).format(date); }
+function formatDate(date: Date, options: Intl.DateTimeFormatOptions, locale: Locale) { return new Intl.DateTimeFormat(locale, options).format(date); }
 function localDateKey(date: Date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; }
 
-function Navigation({ active, onChange, mobile = false }: { active: View; onChange: (view: View) => void; mobile?: boolean }) {
-  return <nav className={mobile ? "mobile-nav" : "side-nav"} aria-label="Navegação principal">
+function Navigation({ active, onChange, locale, mobile = false }: { active: View; onChange: (view: View) => void; locale: Locale; mobile?: boolean }) {
+  const t = (text: string) => translate(locale, text);
+  return <nav className={mobile ? "mobile-nav" : "side-nav"} aria-label={t("Navegação principal")}>
     {navItems.map((item) => <button key={item.id} className={`nav-item ${active === item.id ? "is-active" : ""}`} onClick={() => onChange(item.id)} aria-current={active === item.id ? "page" : undefined}>
-      <span className="nav-icon" aria-hidden="true">{item.icon}</span><span>{item.label}</span>
+      <span className="nav-icon" aria-hidden="true">{item.icon}</span><span>{t(item.label)}</span>
     </button>)}
   </nav>;
 }
 
-function StatusPill({ status }: { status: Status }) {
-  return <span className={`status-pill status-${status}`}><span className="status-dot" />{labels[status]}</span>;
+function StatusPill({ status, locale }: { status: Status; locale: Locale }) {
+  return <span className={`status-pill status-${status}`}><span className="status-dot" />{translate(locale, statusLabels[status])}</span>;
 }
 
-function LessonRow({ lesson, editable, onChange }: { lesson: Lesson; editable?: boolean; onChange?: (value: Status) => void }) {
+function LessonRow({ lesson, editable, locale, onChange }: { lesson: Lesson; editable?: boolean; locale: Locale; onChange?: (value: Status) => void }) {
+  const t = (text: string) => translate(locale, text);
   return <article className="lesson-row"><span className={`subject-mark mark-${lesson.subject.toLowerCase()}`} aria-hidden="true">{lesson.subject.slice(0, 1)}</span>
-    <div className="lesson-main"><div className="lesson-title-line"><strong>{lesson.subject}</strong><StatusPill status={lesson.status} /></div><p>{lesson.topic}</p>
-      <span className="lesson-meta">{formatDate(lesson.date, { weekday: "short", day: "numeric", month: "short" })} · {lesson.time} · {lesson.teacher}</span></div>
-    {editable ? <label className="status-select"><span className="sr-only">Situação de {lesson.subject}</span><select value={lesson.status} aria-label={`Registrar situação de ${lesson.subject}`} onChange={(event) => onChange?.(event.target.value as Status)}>
-      <option value="attended">Presença</option><option value="student-absent">Faltei</option><option value="teacher-absent">Professor faltou</option><option value="upcoming">Agendada</option>
+    <div className="lesson-main"><div className="lesson-title-line"><strong>{lesson.subject}</strong><StatusPill status={lesson.status} locale={locale} /></div><p>{lesson.topic}</p>
+      <span className="lesson-meta">{formatDate(lesson.date, { weekday: "short", day: "numeric", month: "short" }, locale)} · {lesson.time} · {lesson.teacher}</span></div>
+    {editable ? <label className="status-select"><span className="sr-only">{t("Situação de")} {lesson.subject}</span><select value={lesson.status} aria-label={`${t("Registrar situação de")} ${lesson.subject}`} onChange={(event) => onChange?.(event.target.value as Status)}>
+      <option value="attended">{t("Presença")}</option><option value="student-absent">{t("Faltei")}</option><option value="teacher-absent">{t("Professor faltou")}</option><option value="upcoming">{t("Agendada")}</option>
     </select></label> : <span className="row-time">◷ {lesson.time}</span>}
   </article>;
 }
 
-function WeekGrid({ days, lessons }: { days: Date[]; lessons: Lesson[] }) {
+function WeekGrid({ days, lessons, locale }: { days: Date[]; lessons: Lesson[]; locale: Locale }) {
   return <div className="week-grid">{days.map((day) => {
     const events = lessons.filter((lesson) => lesson.date.toDateString() === day.toDateString());
     return <article className={`day-column ${day.toDateString() === new Date().toDateString() ? "day-today" : ""}`} key={day.toISOString()}>
-      <div className="day-label"><span>{formatDate(day, { weekday: "short" }).replace(".", "")}</span><strong>{formatDate(day, { day: "2-digit" })}</strong></div>
+      <div className="day-label"><span>{formatDate(day, { weekday: "short" }, locale).replace(".", "")}</span><strong>{formatDate(day, { day: "2-digit" }, locale)}</strong></div>
       <div className="day-events">{events.length ? events.map((lesson) => <div className={`day-event event-${lesson.status}`} key={lesson.id}><span>{lesson.time}</span><strong>{lesson.subject}</strong><small>{lesson.topic}</small></div>) : <span className="no-class">—</span>}</div>
     </article>;
   })}</div>;
 }
 
 export default function StudentDashboard() {
+  const [locale, setLocale] = useState<Locale>("pt-BR");
+  const [theme, setTheme] = useState<Theme>("light");
+  const t = (text: string) => translate(locale, text);
   const [active, setActive] = useState<View>("overview");
   const [lessons, setLessons] = useState<Lesson[]>(demoLessons);
   const [weekOffset, setWeekOffset] = useState(0);
@@ -73,6 +80,23 @@ export default function StudentDashboard() {
   const [historySubject, setHistorySubject] = useState("all");
   const [historyFrom, setHistoryFrom] = useState("");
   const [historyTo, setHistoryTo] = useState("");
+  useEffect(() => {
+    const preferences = loadUiPreferences();
+    if (preferences.locale) setLocale(preferences.locale);
+    if (preferences.theme) setTheme(preferences.theme);
+  }, []);
+  useEffect(() => {
+    document.documentElement.lang = locale;
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#171d19" : "#243d34");
+  }, [locale, theme]);
+  function changeLocale(value: Locale) { setLocale(value); saveUiPreferences({ locale: value, theme }); }
+  function changeTheme() {
+    const nextTheme = theme === "light" ? "dark" : "light";
+    setTheme(nextTheme);
+    saveUiPreferences({ locale, theme: nextTheme });
+  }
   const days = useMemo(() => Array.from({ length: 7 }, (_, index) => { const day = new Date(); day.setHours(0, 0, 0, 0); day.setDate(day.getDate() + weekOffset * 7 + index); return day; }), [weekOffset]);
   const ordered = [...lessons].toSorted((a, b) => a.date.getTime() - b.date.getTime());
   const nextLesson = ordered.find((lesson) => lesson.status === "upcoming" && lesson.date.getTime() >= Date.now());
@@ -80,15 +104,15 @@ export default function StudentDashboard() {
   const filteredHistory = history.filter((lesson) => {
     const matchesSubject = historySubject === "all" || lesson.subject === historySubject;
     const query = historySearch.trim().toLocaleLowerCase("pt-BR");
-    const searchable = `${lesson.subject} ${lesson.topic} ${lesson.teacher} ${labels[lesson.status]}`.toLocaleLowerCase("pt-BR");
+    const searchable = `${lesson.subject} ${lesson.topic} ${lesson.teacher} ${t(statusLabels[lesson.status])}`.toLocaleLowerCase(locale);
     const lessonDate = localDateKey(lesson.date);
     const matchesPeriod = (!historyFrom || lessonDate >= historyFrom) && (!historyTo || lessonDate <= historyTo);
     return matchesSubject && matchesPeriod && (!query || searchable.includes(query));
   });
   const subjects = [...new Set(lessons.map((lesson) => lesson.subject))];
   const absences = lessons.filter((lesson) => lesson.status === "student-absent" || lesson.status === "teacher-absent").length;
-  const viewTitle = active === "overview" ? "Olá, estudante." : active === "calendar" ? "Seu calendário." : active === "history" ? "Seu histórico." : "Suas matérias.";
-  const viewSubtitle = active === "overview" ? "Tudo o que você precisa para chegar bem à próxima aula." : active === "calendar" ? "Uma semana de cada vez, organizada do seu jeito." : active === "history" ? "Um registro do que você já aprendeu e viveu." : "Acompanhe cada matéria e o que está estudando.";
+  const viewTitle = t(active === "overview" ? "Olá, estudante." : active === "calendar" ? "Seu calendário." : active === "history" ? "Seu histórico." : "Suas matérias.");
+  const viewSubtitle = t(active === "overview" ? "Tudo o que você precisa para chegar bem à próxima aula." : active === "calendar" ? "Uma semana de cada vez, organizada do seu jeito." : active === "history" ? "Um registro do que você já aprendeu e viveu." : "Acompanhe cada matéria e o que está estudando.");
   const from = days[0] ?? new Date(); const to = days[6] ?? new Date();
 
   function changeStatus(id: string, status: Status) { setLessons((current) => current.map((lesson) => lesson.id === id ? { ...lesson, status } : lesson)); setNotice("Registro de demonstração atualizado nesta sessão."); }
@@ -102,29 +126,30 @@ export default function StudentDashboard() {
 
   return <div className="app-shell">
     <aside className="sidebar"><a className="brand" href="#inicio" onClick={(event) => { event.preventDefault(); setActive("overview"); }}><span className="brand-mark">a.</span><span>Aula em Dia<small>seu espaço de estudos</small></span></a>
-      <div className="nav-section-label">MENU</div><Navigation active={active} onChange={setActive} />
-      <div className="sidebar-bottom"><div className="help-card"><span className="help-spark">✳</span><strong>Um passo de cada vez.</strong><p>Seu progresso também conta nos dias sem aula.</p></div><div className="profile-mini"><div className="avatar">AL</div><div><strong>Perfil aluno</strong><span>Meu espaço</span></div><span className="profile-menu">···</span></div></div>
+      <div className="nav-section-label">{t("MENU")}</div><Navigation active={active} onChange={setActive} locale={locale} />
+      <div className="sidebar-bottom"><div className="help-card"><span className="help-spark">✳</span><strong>{t("Um passo de cada vez.")}</strong><p>{t("Seu progresso também conta nos dias sem aula.")}</p></div><div className="profile-mini"><div className="avatar">AL</div><div><strong>{t("Perfil aluno")}</strong><span>{t("Meu espaço")}</span></div><span className="profile-menu">···</span></div></div>
     </aside>
-    <main className="main-content"><header className="topbar"><div className="mobile-brand"><span className="brand-mark">a.</span><strong>Aula em Dia</strong></div><div className="breadcrumb">Meu espaço <span>/</span> <strong>{navItems.find((item) => item.id === active)?.label}</strong></div><div className="topbar-right"><span className="demo-tag"><span />Modo demonstração</span><div className="avatar top-avatar">AL</div></div></header>
-      <div className="content-wrap"><div className="page-heading"><div><p className="eyebrow">SEU RITMO, SEU CAMINHO</p><h1>{viewTitle}</h1><p className="heading-subtitle">{viewSubtitle}</p></div><button className="primary-button" onClick={() => setFormOpen(true)}><span aria-hidden="true">＋</span>Nova aula</button></div>
+    <main className="main-content"><header className="topbar"><div className="mobile-brand"><span className="brand-mark">a.</span><strong>Aula em Dia</strong></div><div className="breadcrumb">{t("Meu espaço")} <span>/</span> <strong>{t(navItems.find((item) => item.id === active)?.label ?? "Visão geral")}</strong></div><div className="topbar-right"><select className="language-select" aria-label={t("Idioma da interface")} value={locale} onChange={(event) => changeLocale(event.target.value as Locale)}>{localeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><button className="theme-toggle" onClick={changeTheme} aria-label={theme === "light" ? t("Ativar tema escuro") : t("Ativar tema claro")} title={theme === "light" ? t("Tema escuro") : t("Tema claro")}>{theme === "light" ? "☾" : "☀"}</button><a className="login-link" href="/entrar">{t("Entrar")}</a><span className="demo-tag"><span />{t("Modo demonstração")}</span><div className="avatar top-avatar">AL</div></div></header>
+      <div className="content-wrap"><div className="page-heading"><div><p className="eyebrow">{t("SEU RITMO, SEU CAMINHO")}</p><h1>{viewTitle}</h1><p className="heading-subtitle">{viewSubtitle}</p></div><button className="primary-button" onClick={() => setFormOpen(true)}><span aria-hidden="true">＋</span>{t("Nova aula")}</button></div>
         {notice ? <p className="notice" role="status">{notice}<button onClick={() => setNotice("")} aria-label="Fechar aviso">×</button></p> : null}
         {active === "overview" ? <>
-          <section className="welcome-card"><div className="welcome-copy"><span className="welcome-kicker">✳ &nbsp;UM BOM DIA COMEÇA COM CALMA</span><h2>Pequenos passos.<br /><em>Grandes aprendizados.</em></h2><p>Organize suas aulas e acompanhe tudo o que está construindo, no seu tempo.</p><button className="welcome-link" onClick={() => setActive("calendar")}>Ver meu calendário <span>→</span></button></div><div className="welcome-art" aria-hidden="true"><div className="sun-disc" /><div className="book-shape book-back" /><div className="book-shape book-front"><span>aprendizado<br />em progresso</span><i>✳</i></div><span className="art-spark spark-one">✳</span><span className="art-spark spark-two">·</span></div></section>
-          <section className="stats-grid" aria-label="Resumo de aulas"><article className="stat-card"><span className="stat-icon stat-lime">▦</span><div><span>Próximas aulas</span><strong>{String(lessons.filter((lesson) => lesson.status === "upcoming").length).padStart(2, "0")}</strong></div><small>na sua agenda</small></article><article className="stat-card"><span className="stat-icon stat-peach">✓</span><div><span>Registros de falta</span><strong>{String(absences).padStart(2, "0")}</strong></div><small>no seu histórico</small></article><article className="stat-card"><span className="stat-icon stat-lilac">▤</span><div><span>Matérias</span><strong>{String(subjects.length).padStart(2, "0")}</strong></div><small>em acompanhamento</small></article></section>
-          <div className="dashboard-grid"><section className="panel calendar-panel"><div className="panel-heading"><div><p className="eyebrow">AGENDA</p><h2>Próximos 7 dias</h2></div><WeekControls from={from} to={to} onBack={() => setWeekOffset((offset) => offset - 1)} onForward={() => setWeekOffset((offset) => offset + 1)} /></div><WeekGrid days={days} lessons={ordered} /></section>
-            <section className="panel next-panel"><div className="panel-heading"><div><p className="eyebrow">SEGUINTE</p><h2>Próxima aula</h2></div><span className="next-chip"><span />A caminho</span></div>{nextLesson ? <div className="next-lesson-card"><div className="next-date"><strong>{formatDate(nextLesson.date, { day: "2-digit" })}</strong><span>{formatDate(nextLesson.date, { month: "short" }).replace(".", "")}</span></div><div className="next-lesson-info"><span className={`subject-mark mark-${nextLesson.subject.toLowerCase()}`}>{nextLesson.subject.slice(0, 1)}</span><div><strong>{nextLesson.subject}</strong><span>{nextLesson.topic}</span></div></div><div className="next-time">◷ &nbsp;{nextLesson.time}</div><div className="teacher-line"><div className="teacher-avatar">{nextLesson.teacher.split(" ").map((part) => part[0]).slice(0, 2).join("")}</div><div><span>Com</span><strong>{nextLesson.teacher}</strong></div><button aria-label="Detalhes da próxima aula" onClick={() => setActive("calendar")}>→</button></div></div> : <p className="empty-note">Nenhuma aula agendada. Adicione uma aula para começar.</p>}</section></div>
-          <section className="panel history-panel"><div className="panel-heading"><div><p className="eyebrow">RECENTEMENTE</p><h2>Últimos registros</h2></div><button className="text-button" onClick={() => setActive("history")}>Ver histórico <span>→</span></button></div><div className="lesson-list">{history.length ? history.slice(0, 3).map((lesson) => <LessonRow key={lesson.id} lesson={lesson} />) : <p className="empty-note">Suas aulas registradas vão aparecer aqui.</p>}</div></section>
+          <section className="welcome-card"><div className="welcome-copy"><span className="welcome-kicker">✳ &nbsp;{t("UM BOM DIA COMEÇA COM CALMA")}</span><h2>{t("Pequenos passos.")}<br /><em>{t("Grandes aprendizados.")}</em></h2><p>{t("Organize suas aulas e acompanhe tudo o que está construindo, no seu tempo.")}</p><button className="welcome-link" onClick={() => setActive("calendar")}>{t("Ver meu calendário")} <span>→</span></button></div><div className="welcome-art" aria-hidden="true"><div className="sun-disc" /><div className="book-shape book-back" /><div className="book-shape book-front"><span>{t("aprendizado")}<br />{t("em progresso")}</span><i>✳</i></div><span className="art-spark spark-one">✳</span><span className="art-spark spark-two">·</span></div></section>
+          <section className="stats-grid" aria-label={t("Resumo de aulas")}><article className="stat-card"><span className="stat-icon stat-lime">▦</span><div><span>{t("Próximas aulas")}</span><strong>{String(lessons.filter((lesson) => lesson.status === "upcoming").length).padStart(2, "0")}</strong></div><small>{t("na sua agenda")}</small></article><article className="stat-card"><span className="stat-icon stat-peach">✓</span><div><span>{t("Registros de falta")}</span><strong>{String(absences).padStart(2, "0")}</strong></div><small>{t("no seu histórico")}</small></article><article className="stat-card"><span className="stat-icon stat-lilac">▤</span><div><span>{t("Matérias")}</span><strong>{String(subjects.length).padStart(2, "0")}</strong></div><small>{t("em acompanhamento")}</small></article></section>
+          <div className="dashboard-grid"><section className="panel calendar-panel"><div className="panel-heading"><div><p className="eyebrow">{t("AGENDA")}</p><h2>{t("Próximos 7 dias")}</h2></div><WeekControls from={from} to={to} locale={locale} onBack={() => setWeekOffset((offset) => offset - 1)} onForward={() => setWeekOffset((offset) => offset + 1)} /></div><WeekGrid days={days} lessons={ordered} locale={locale} /></section>
+            <section className="panel next-panel"><div className="panel-heading"><div><p className="eyebrow">{t("SEGUINTE")}</p><h2>{t("Próxima aula")}</h2></div><span className="next-chip"><span />{t("A caminho")}</span></div>{nextLesson ? <div className="next-lesson-card"><div className="next-date"><strong>{formatDate(nextLesson.date, { day: "2-digit" }, locale)}</strong><span>{formatDate(nextLesson.date, { month: "short" }, locale).replace(".", "")}</span></div><div className="next-lesson-info"><span className={`subject-mark mark-${nextLesson.subject.toLowerCase()}`}>{nextLesson.subject.slice(0, 1)}</span><div><strong>{nextLesson.subject}</strong><span>{nextLesson.topic}</span></div></div><div className="next-time">◷ &nbsp;{nextLesson.time}</div><div className="teacher-line"><div className="teacher-avatar">{nextLesson.teacher.split(" ").map((part) => part[0]).slice(0, 2).join("")}</div><div><span>{t("Com")}</span><strong>{nextLesson.teacher}</strong></div><button aria-label={t("Detalhes da próxima aula")} onClick={() => setActive("calendar")}>→</button></div></div> : <p className="empty-note">{t("Nenhuma aula agendada. Adicione uma aula para começar.")}</p>}</section></div>
+          <section className="panel history-panel"><div className="panel-heading"><div><p className="eyebrow">{t("RECENTEMENTE")}</p><h2>{t("Últimos registros")}</h2></div><button className="text-button" onClick={() => setActive("history")}>{t("Ver histórico")} <span>→</span></button></div><div className="lesson-list">{history.length ? history.slice(0, 3).map((lesson) => <LessonRow key={lesson.id} lesson={lesson} locale={locale} />) : <p className="empty-note">{t("Suas aulas registradas vão aparecer aqui.")}</p>}</div></section>
         </> : null}
-        {active === "calendar" ? <section className="panel full-panel"><div className="panel-heading"><div><p className="eyebrow">AGENDA DO ALUNO</p><h2>Próximos 7 dias</h2></div><WeekControls from={from} to={to} onBack={() => setWeekOffset((offset) => offset - 1)} onForward={() => setWeekOffset((offset) => offset + 1)} /></div><WeekGrid days={days} lessons={ordered} /></section> : null}
-        {active === "history" ? <section className="panel full-panel"><div className="panel-heading"><div><p className="eyebrow">SEU CAMINHO ATÉ AQUI</p><h2>Aulas e ocorrências</h2></div><span className="demo-tag"><span />Dados de exemplo</span></div><div className="history-filters" role="search" aria-label="Filtrar histórico"><label>Buscar no histórico<input type="search" value={historySearch} onChange={(event) => setHistorySearch(event.target.value)} placeholder="Matéria, conteúdo ou professor" /></label><label>Matéria<select value={historySubject} onChange={(event) => setHistorySubject(event.target.value)}><option value="all">Todas as matérias</option>{subjects.toSorted().map((subject) => <option key={subject} value={subject}>{subject}</option>)}</select></label><label>De<input type="date" value={historyFrom} onChange={(event) => setHistoryFrom(event.target.value)} /></label><label>Até<input type="date" value={historyTo} onChange={(event) => setHistoryTo(event.target.value)} /></label></div><div className="lesson-list history-list">{filteredHistory.length ? filteredHistory.map((lesson) => <LessonRow key={lesson.id} lesson={lesson} editable onChange={(status) => changeStatus(lesson.id, status)} />) : <p className="empty-note">{history.length ? "Nenhum registro corresponde aos filtros." : "Nenhuma aula registrada ainda."}</p>}</div><p className="history-hint">{filteredHistory.length} {filteredHistory.length === 1 ? "registro" : "registros"} · Edite a situação nos dados de demonstração; ela não será salva depois que esta página fechar.</p></section> : null}
+        {active === "calendar" ? <section className="panel full-panel"><div className="panel-heading"><div><p className="eyebrow">{t("AGENDA DO ALUNO")}</p><h2>{t("Próximos 7 dias")}</h2></div><WeekControls from={from} to={to} locale={locale} onBack={() => setWeekOffset((offset) => offset - 1)} onForward={() => setWeekOffset((offset) => offset + 1)} /></div><WeekGrid days={days} lessons={ordered} locale={locale} /></section> : null}
+        {active === "history" ? <section className="panel full-panel"><div className="panel-heading"><div><p className="eyebrow">{t("SEU CAMINHO ATÉ AQUI")}</p><h2>{t("Aulas e ocorrências")}</h2></div><span className="demo-tag"><span />{t("Dados de exemplo")}</span></div><div className="history-filters" role="search" aria-label={t("Filtrar histórico")}><label>{t("Buscar no histórico")}<input type="search" value={historySearch} onChange={(event) => setHistorySearch(event.target.value)} placeholder={t("Matéria, conteúdo ou professor")} /></label><label>{t("Matéria")}<select value={historySubject} onChange={(event) => setHistorySubject(event.target.value)}><option value="all">{t("Todas as matérias")}</option>{subjects.toSorted().map((subject) => <option key={subject} value={subject}>{subject}</option>)}</select></label><label>{t("De")}<input type="date" value={historyFrom} onChange={(event) => setHistoryFrom(event.target.value)} /></label><label>{t("Até")}<input type="date" value={historyTo} onChange={(event) => setHistoryTo(event.target.value)} /></label></div><div className="lesson-list history-list">{filteredHistory.length ? filteredHistory.map((lesson) => <LessonRow key={lesson.id} lesson={lesson} locale={locale} editable onChange={(status) => changeStatus(lesson.id, status)} />) : <p className="empty-note">{history.length ? t("Nenhum registro corresponde aos filtros.") : t("Nenhuma aula registrada ainda.")}</p>}</div><p className="history-hint">{filteredHistory.length} {t(filteredHistory.length === 1 ? "registro" : "registros")} · {t("Edite a situação nos dados de demonstração; ela não será salva depois que esta página fechar.")}</p></section> : null}
         {active === "subjects" ? <section className="subjects-grid">{subjects.map((subject, index) => { const related = lessons.filter((lesson) => lesson.subject === subject); const recent = related.filter((lesson) => lesson.status !== "upcoming").length; return <article className={`subject-card subject-card-${index % 4}`} key={subject}><div className="subject-card-top"><span className={`subject-mark mark-${subject.toLowerCase()}`}>{subject.slice(0, 1)}</span><span className="subject-count">{related.length} aulas</span></div><h2>{subject}</h2><p>{related[0]?.topic ?? "Sem tópico anotado"}</p><div className="subject-progress"><span style={{ width: `${Math.max(22, Math.min(100, 24 + recent * 22))}%` }} /></div><div className="subject-foot"><span>{recent} {recent === 1 ? "registro" : "registros"}</span><button onClick={() => setActive("history")}>Ver histórico <span>→</span></button></div></article>; })}</section> : null}
-        <footer className="demo-footnote">Demonstração inicial · seus registros ainda não são salvos</footer>
-      </div><Navigation active={active} onChange={setActive} mobile />
-      {formOpen ? <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setFormOpen(false); }}><section className="lesson-dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><div className="dialog-heading"><div><p className="eyebrow">AGENDA DO ALUNO</p><h2 id="dialog-title">Adicionar aula</h2></div><button className="dialog-close" onClick={() => setFormOpen(false)} aria-label="Fechar">×</button></div><p className="dialog-help">Este registro fica apenas nesta demonstração.</p><form onSubmit={addLesson}><label>Matéria<input name="subject" placeholder="Ex.: História" required maxLength={48} /></label><label>O que você vai estudar?<input name="topic" placeholder="Ex.: Brasil Colônia" required maxLength={80} /></label><div className="form-row"><label>Data<input name="date" type="date" required defaultValue={localDateKey(dateAt(1, "09:00"))} /></label><label>Horário<input name="time" type="time" required defaultValue="09:00" /></label></div><div className="dialog-actions"><button type="button" className="secondary-button" onClick={() => setFormOpen(false)}>Cancelar</button><button type="submit" className="primary-button">Adicionar à agenda</button></div></form></section></div> : null}
+        <footer className="demo-footnote">{t("Demonstração inicial · seus registros ainda não são salvos")}</footer>
+      </div><Navigation active={active} onChange={setActive} locale={locale} mobile />
+      {formOpen ? <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setFormOpen(false); }}><section className="lesson-dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><div className="dialog-heading"><div><p className="eyebrow">{t("AGENDA DO ALUNO")}</p><h2 id="dialog-title">{t("Adicionar aula")}</h2></div><button className="dialog-close" onClick={() => setFormOpen(false)} aria-label={t("Fechar")}>×</button></div><p className="dialog-help">{t("Este registro fica apenas nesta demonstração.")}</p><form onSubmit={addLesson}><label>{t("Matéria")}<input name="subject" placeholder={t("Ex.: História")} required maxLength={48} /></label><label>{t("O que você vai estudar?")}<input name="topic" placeholder={t("Ex.: Brasil Colônia")} required maxLength={80} /></label><div className="form-row"><label>{t("Data")}<input name="date" type="date" required defaultValue={localDateKey(dateAt(1, "09:00"))} /></label><label>{t("Horário")}<input name="time" type="time" required defaultValue="09:00" /></label></div><div className="dialog-actions"><button type="button" className="secondary-button" onClick={() => setFormOpen(false)}>{t("Cancelar")}</button><button type="submit" className="primary-button">{t("Adicionar à agenda")}</button></div></form></section></div> : null}
     </main>
   </div>;
 }
 
-function WeekControls({ from, to, onBack, onForward }: { from: Date; to: Date; onBack: () => void; onForward: () => void }) {
-  return <div className="week-controls"><button onClick={onBack} aria-label="Sete dias anteriores">‹</button><span>{formatDate(from, { day: "numeric" })} — {formatDate(to, { day: "numeric", month: "long" })}</span><button onClick={onForward} aria-label="Sete dias seguintes">›</button></div>;
+function WeekControls({ from, to, locale, onBack, onForward }: { from: Date; to: Date; locale: Locale; onBack: () => void; onForward: () => void }) {
+  const t = (text: string) => translate(locale, text);
+  return <div className="week-controls"><button onClick={onBack} aria-label={t("Sete dias anteriores")}>‹</button><span>{formatDate(from, { day: "numeric" }, locale)} — {formatDate(to, { day: "numeric", month: "long" }, locale)}</span><button onClick={onForward} aria-label={t("Sete dias seguintes")}>›</button></div>;
 }

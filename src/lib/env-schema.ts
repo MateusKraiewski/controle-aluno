@@ -10,6 +10,8 @@ export const databaseUrlSchema = z.string().refine((value) => {
 });
 
 export const logLevelSchema = z.enum(["trace", "debug", "info", "warn", "error", "fatal", "silent"]).default("info");
+export const authSecretSchema = z.string().min(32);
+export const appUrlSchema = z.string().url();
 
 export function parseEnv<T>(key: string, value: unknown, schema: z.ZodType<T>): T {
   const result = schema.safeParse(value);

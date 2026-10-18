@@ -37,6 +37,8 @@ O aluno precisa lembrar quando teve aula e guardar o que estudou. Agenda, anota�
 ## Requisitos
 
 - Interface em português, mobile first, responsiva e acessível por teclado.
+- Interface disponível em português do Brasil, português de Portugal, inglês e espanhol, com tema claro e escuro.
+- Instalação como web app na Tela de Início do iOS sem publicação na App Store.
 - Datas exibidas no fuso local; persistência deve evitar ambiguidades de fuso e recorrência.
 - Dados de agenda e frequência são privados; não aparecem em logs nem em erros públicos.
 - Uma falta indica explicitamente quem faltou; nunca inferir a parte ausente.
@@ -45,14 +47,14 @@ O aluno precisa lembrar quando teve aula e guardar o que estudou. Agenda, anota�
 
 - Next.js App Router, TypeScript, Tailwind CSS e npm.
 - PostgreSQL e Drizzle ORM; o schema inicial de matérias, aulas e presenças está versionado. O servidor local exige credenciais que ainda não estão configuradas no projeto.
-- Sem autenticação no protótipo local. Autenticação e isolamento dos dados no servidor são pré-requisitos para dados reais; por isso a migração ainda não foi aplicada e a interface segue demonstrativa.
+- Better Auth está configurado para e-mail/senha, mas depende de variáveis locais e migrações ainda não aplicadas. A interface de aula segue demonstrativa até a autenticação e conexão ao banco serem ativadas.
 - Nenhuma integração externa ou serviço pago faz parte do escopo atual.
 
 ## Hipóteses e pendências
 
 - **Hipótese reversível:** “Aula em Dia” é o nome de trabalho.
 - **Hipótese reversível:** começar como web app responsivo instalável, sem código nativo.
-- **Pendente antes de dados reais:** escolher provedor PostgreSQL, autenticação e regras de acesso.
+- **Pendente antes de dados reais:** configurar credenciais PostgreSQL, aplicar as migrações e concluir autorização nos fluxos de leitura e gravação.
 - **Pendente para fase professor:** definir vínculo entre aluno e professor e como resolvem divergências de presença.
 - **Pendente antes de persistir:** definir recorrência, cancelamento e remarcação a partir dos casos reais.
 
@@ -67,11 +69,11 @@ O aluno precisa lembrar quando teve aula e guardar o que estudou. Agenda, anota�
 
 ## Entrega demonstrativa atual
 
-A tela inicial do aluno apresenta agenda de 7 dias, próxima aula, matérias, histórico filtrável por texto, matéria e período, edição do status e cadastro temporário de aula. O web app tem manifesto e ícone para instalação em dispositivos compatíveis. As mudanças de dados só existem durante a sessão e estão identificadas como demonstração.
+A tela inicial do aluno apresenta agenda de 7 dias, próxima aula, matérias, histórico filtrável por texto, matéria e período, edição temporária do status e cadastro demonstrativo. A interface oferece quatro idiomas e tema claro/escuro. O manifesto PWA e metadados do iOS permitem adicionar à Tela de Início pelo Safari. Nenhum dado de aula é persistido ainda.
 
 ## Próxima entrega
 
-Configurar credenciais de uma instância PostgreSQL e implementar autenticação/autorização por aluno antes de aplicar a migração e conectar a interface. O modelo inicial já contempla matérias, data/horário, conteúdo previsto/estudado e estados distintos de presença/falta. Recorrência segue pendente e não está modelada.
+Configurar credenciais de uma instância PostgreSQL, aplicar a migração e ligar os fluxos de leitura/gravação às sessões de aluno. O modelo contempla matérias, data/horário, conteúdo previsto/estudado e estados distintos de presença/falta. Recorrência segue pendente e não está modelada.
 
 ## Manutenção
 
