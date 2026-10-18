@@ -1,0 +1,1 @@
+CREATE INDEX "lessons_attendance_author_idx" ON "lessons" USING btree ("attendance_recorded_by");

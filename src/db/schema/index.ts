@@ -5,10 +5,12 @@ import {
   index,
   pgEnum,
   pgTable,
+  smallint,
   text,
   time,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
@@ -34,7 +36,35 @@ export const subjects = pgTable(
   },
   (table) => [
     unique("subjects_id_student_id_unique").on(table.id, table.studentId),
-    index("subjects_student_name_idx").on(table.studentId, table.name),
+    uniqueIndex("subjects_student_name_unique").on(table.studentId, table.name),
+  ],
+);
+
+export const lessonSeries = pgTable(
+  "lesson_series",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    studentId: text("student_id").notNull().references(() => user.id),
+    subjectId: uuid("subject_id").notNull(),
+    startsOn: date("starts_on").notNull(),
+    endsOn: date("ends_on").notNull(),
+    startsAt: time("starts_at").notNull(),
+    endsAt: time("ends_at").notNull(),
+    timeZone: text("time_zone").notNull(),
+    weekdays: smallint("weekdays").array().notNull(),
+    intervalWeeks: smallint("interval_weeks").notNull().default(1),
+    plannedContent: text("planned_content"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    unique("lesson_series_id_student_id_unique").on(table.id, table.studentId),
+    check("lesson_series_end_after_start", sql`${table.endsAt} > ${table.startsAt}`),
+    check("lesson_series_dates_ordered", sql`${table.endsOn} >= ${table.startsOn}`),
+    check("lesson_series_interval_valid", sql`${table.intervalWeeks} BETWEEN 1 AND 52`),
+    check("lesson_series_weekdays_present", sql`cardinality(${table.weekdays}) > 0`),
+    foreignKey({ name: "lesson_series_subject_student_fk", columns: [table.subjectId, table.studentId], foreignColumns: [subjects.id, subjects.studentId] }),
+    index("lesson_series_student_range_idx").on(table.studentId, table.startsOn, table.endsOn),
   ],
 );
 
@@ -44,6 +74,7 @@ export const lessons = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     studentId: text("student_id").notNull().references(() => user.id),
     subjectId: uuid("subject_id").notNull(),
+    seriesId: uuid("series_id"),
     lessonDate: date("lesson_date").notNull(),
     startsAt: time("starts_at").notNull(),
     endsAt: time("ends_at").notNull(),
@@ -51,6 +82,8 @@ export const lessons = pgTable(
     studiedContent: text("studied_content"),
     attendance: attendanceStatus("attendance").notNull().default("unrecorded"),
     attendanceNote: text("attendance_note"),
+    attendanceRecordedBy: text("attendance_recorded_by").references(() => user.id),
+    attendanceRecordedAt: timestamp("attendance_recorded_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -59,10 +92,17 @@ export const lessons = pgTable(
     check("lessons_end_after_start", sql`${table.endsAt} > ${table.startsAt}`),
     index("lessons_student_date_idx").on(table.studentId, table.lessonDate),
     index("lessons_subject_student_idx").on(table.subjectId, table.studentId),
+    index("lessons_attendance_author_idx").on(table.attendanceRecordedBy),
+    uniqueIndex("lessons_series_date_unique").on(table.seriesId, table.lessonDate),
     foreignKey({
       name: "lessons_subject_student_fk",
       columns: [table.subjectId, table.studentId],
       foreignColumns: [subjects.id, subjects.studentId],
+    }),
+    foreignKey({
+      name: "lessons_series_student_fk",
+      columns: [table.seriesId, table.studentId],
+      foreignColumns: [lessonSeries.id, lessonSeries.studentId],
     }),
   ],
 );

@@ -1,34 +1,27 @@
-# Preparação local
+# Onboarding local
 
-## Pré-requisitos
+## Requisitos
 
-Node.js 24 e npm. Setup observado: Node.js 24.18.0, npm 11.16.0, Windows e PowerShell.
+Node.js 24/npm 11 e PowerShell no setup registrado. PostgreSQL 17 local isolado já está criado em `.local/postgres-data` na cópia atual; segredo/URI estão em `.env.local` e nunca devem ser copiados para Git.
 
-## Primeira execução
-
-Na raiz (`E:\controle-aluno`):
+## Desenvolvimento
 
 ```powershell
-npm ci
-npm run dev
+npm install
+npm run db:migrate
+npm run dev -- --hostname 127.0.0.1 --port 3000
 ```
 
-O app abre em <http://localhost:3000>. Use `.env.example` para nomes de variáveis quando existir integração. Não grave valores secretos no repositório.
-O script local usa Webpack devido à falha observada ao carregar o binding nativo do Turbopack neste Windows.
-Em navegadores compatíveis, o manifesto identifica o Aula em Dia como app instalável. Instalação e comportamento offline ainda não foram conectados a um service worker.
+Abra `http://127.0.0.1:3000`; `/` tem dados de demonstração e `/entrar` tem login/cadastro Better Auth. O cadastro grava utilizador no PostgreSQL local. Migrations futuras devem ser geradas via `npm run db:generate`, revisadas, aplicadas em banco de desenvolvimento e testadas antes de integrar.
 
-## Banco
+Dev/build usam Webpack porque o binding SWC/Turbopack desta instalação Windows é inválido; Next carrega fallback WASM. Consulte `docs/setup.md` para comandos de cluster.
 
-A base planejada é PostgreSQL com Drizzle, mas ainda não existe configuração de banco, schema ou provedor. Não é necessário banco para ver o protótipo. Antes de dados reais, escolher destino, configurar `DATABASE_URL` localmente, revisar SQL gerado e aplicar migrações apenas no destino confirmado.
+## Qualidade e fluxo de trabalho
 
-## Verificação
+Antes de submeter alteração: `npm run lint`, `npm run lint:typed`, `npm run lint:rules`, `npm run typecheck`, `npm test`, `npm run build`. Em mudanças de schema, recriar banco em branco e validar migration; em auth/presença/vínculos, aplicar matriz de autorização e revisar diferencialmente.
 
-Consulte `docs/quality.md`. Os checks só serão listados como disponíveis quando estiverem configurados; não alegue resultados que não foram executados.
+Leia `PRODUCT.md`, `docs/roadmap.md`, `docs/ux-flows.md`, `docs/domain-model.md` e `docs/architecture.md` conforme o escopo. Escreva primeiro critérios de aceite e não transforme status futuro em promessa de feature implementada.
 
-## Agentes
+## Instalabilidade
 
-Leia [AGENTS.md](../AGENTS.md); [CLAUDE.md](../CLAUDE.md) encaminha para as mesmas instruções. Skills locais ficam em `.agents/skills/`; `docs/setup.md` registra origem e status de descoberta.
-
-## Problemas conhecidos
-
-Nenhum observado além da ausência de banco, autenticação e fluxos do produto.
+O localhost não pode ser instalado em outro dispositivo como app remoto. Para iPhone, deployment HTTPS, Safari e Compartilhar → Adicionar à Tela de Início. Deployment e validação física não estão concluídos.

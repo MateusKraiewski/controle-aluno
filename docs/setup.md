@@ -1,65 +1,56 @@
-# Setup e evidências
+# Setup e evidências do ambiente
 
-## Fonte e contexto
+**Última atualização:** 18/10/2026 · **Windows / Europe-Lisbon** · Node.js 24.18.0 · npm 11.16.0.
 
-- Data: 18/10/2026 (contexto do cliente, Europe/Lisbon).
-- Toolkit: `soumatheusgomes/vibe-coding-toolkit`, revisão `de66fe3`, separado em `E:\vibe-coding-toolkit`.
-- Cliente: Codex Desktop. Sem alteração de modelo, autenticação, preferências globais ou permissões.
-- Runtime verificado: Node.js 24.18.0 e npm 11.16.0.
-- Produto: perfil aluno primeiro; web responsivo mobile first; professor previsto para fase posterior.
-- Repositório GitHub `MateusKraiewski/controle-aluno`, branch `main`; commit inicial `438897d` enviado. A cópia local acompanha `origin/main`.
+## Projeto e origem
 
-## Decisões e fontes
+- Diretório: `E:\controle-aluno`.
+- Remoto: `https://github.com/MateusKraiewski/controle-aluno.git`, branch `main` (o push das alterações desta rodada deve ser confirmado no relatório após executar Git).
+- Toolkit usado: `soumatheusgomes/vibe-coding-toolkit`, instalado antes em `E:\vibe-coding-toolkit`; cópias selecionadas em `.agents/skills/`.
+- Fonte dos acordos: `AGENTS.md`, `PRODUCT.md`, este arquivo e os docs em `docs/`.
 
-- Bootstrap Next.js pelo toolkit. A versão instalada pelo scaffold é Next.js 16.4.2; canal estável observado no pacote, sem adoção de canary.
-- PostgreSQL + Drizzle escolhido; serviço local PostgreSQL 17 está ativo. A conexão TCP local recusou autenticação sem senha (`psql -h 127.0.0.1 -U postgres -w`), e nenhuma credencial foi encontrada no projeto. Schema de domínio e Better Auth estão preparados; migrações ainda não foram aplicadas. Nenhum serviço externo foi selecionado.
-- Better Auth 1.7.10 e `@better-auth/drizzle-adapter` 1.7.10 instalados; email/senha e rota Next configurados. A página `/entrar` usa o cliente real e informa que falta conexão ao banco.
-- Idiomas da interface: pt-BR, pt-PT, inglês e espanhol. Tema claro/escuro. Preferências não pessoais ficam em `localStorage` sob chave versionada; dados de aula não.
-- Instalação iOS: manifesto PWA `standalone` e metadados Apple; Safari > Compartilhar > Adicionar à Tela de Início, sem App Store.
-- Skills da coleção Vercel selecionadas para Codex e copiadas localmente no Windows. React Native/Expo não instalado: plataforma decidida como web responsiva nesta etapa.
-- Context7 adicionado em `.codex/config.toml` por não haver servidor ativo no inventário `codex mcp list`; consulta real e aprovação de confiança do projeto continuam pendentes.
-- `.graphifyignore` foi configurado. O comando `graphify`, RTK e os plugins Ponytail/Caveman/Superpowers não estão disponíveis neste ambiente e não foram instalados globalmente.
+## Skill catalog realmente instalado
 
-## Componentes
+`skills-lock.json` lista 13 capacidades Vercel/PostgreSQL: `deploy-to-vercel`, `differential-review`, `find-skills`, `next-bundle-optimizer`, `next-dev-loop`, `supabase-postgres-best-practices`, `vercel-cli-with-tokens`, `vercel-composition-patterns`, `vercel-optimize`, `vercel-react-best-practices`, `vercel-react-view-transitions`, `web-design-guidelines` e `writing-guidelines`. **Não há skill chamada PMO, Product Management, UX Research ou QA no catálogo atual.** As atividades são estruturadas neste projeto com Product Brief, roadmap/gates, jornadas/estados UX, ADR, matriz de riscos e estratégia QA. Isso usa as capacidades disponíveis sem dizer que uma skill ausente foi executada.
 
-| Componente | Ação e motivo | Escopo | Estado/evidência |
-|---|---|---|---|
-| Next.js/React/TypeScript/Tailwind | Scaffold e core Drizzle, PostgreSQL, Zod, Pino, Tailwind merge, ESLint, Vitest | Projeto | Instalado; Next 16.4.2, React 19.3.0, TypeScript 5.9.3; versões exatas no lockfile |
-| Vercel React Best Practices, Composition, web-design-guidelines, writing-guidelines, view-transitions, optimize, deploy-to-vercel, vercel-cli-with-tokens | Capacidades web catalogadas | `.agents/skills/`, Codex | Cópias locais; `npx skills list --agent codex --json` listou 13 skills de projeto |
-| find-skills | Busca de capacidades adicionais | `.agents/skills/`, Codex | Instalado e listado pelo CLI |
-| next-dev-loop | Feedback Next/dev server | `.agents/skills/`, Codex | Instalado; Next 16.4.2 e agent-browser 0.39.1; Chrome instalado; Turbopack falha nos bindings nativos do Windows, então a prévia roda com Webpack |
-| next-bundle-optimizer | Auditoria de bundle | `.agents/skills/`, Codex | Instalado; nenhuma análise de bundle executada |
-| supabase-postgres-best-practices | Padrões PostgreSQL independentes do provedor | `.agents/skills/`, Codex | Instalado e listado pelo CLI |
-| differential-review | Revisões de diffs sensíveis | `.agents/skills/`, Codex | Instalado e listado; nenhuma revisão de segurança executada |
-| gh-fix-ci | Falhas GitHub Actions em Codex | Projeto | Não aplicável agora: sem remoto/PR/workflow |
-| shadcn | Sistema de componentes | Projeto | Não adotado; Tailwind customizado é suficiente para a primeira tela |
-| Sentry MCP | Observabilidade remota | Projeto | Pendente/não selecionado: nenhum serviço ou projeto Sentry escolhido |
-| PostgreSQL/Drizzle | Persistência futura | Projeto | Dependências e templates de acesso instalados; sem schema/provedor/servidor |
-| Context7 | Consulta de documentação | Projeto | Configurado em TOML; não consultado ainda; requer confiança do projeto |
-| RTK/Graphify e plugins do toolkit | Integrações cliente/máquina | Máquina/cliente | Não instalados/disponíveis; sem alteração de caches ou preferências globais |
-| agent-browser | Navegador para `next-dev-loop` | Global do usuário | Versão 0.39.1 e Chrome 155 instalados; sessão `aula-em-dia-40028c40bb87` abriu a página inicial |
+Skills de React/Next, padrões de autenticação server-side, preferências/localStorage e PostgreSQL foram consultadas para as mudanças; a revisão UI segue o arquivo Vercel Web Interface Guidelines. Consumo de deployment/senhas e publicação hospedada não está autorizado por instalação de skill e não foi iniciado.
 
-## Documentação criada
+## Ambiente local
 
-`PRODUCT.md`, `README.md`, `AGENTS.md`, `CLAUDE.md` e os cinco documentos em `docs/` foram preenchidos a partir da descrição recebida. O produto ainda não tem histórico legado a consolidar.
+- PostgreSQL 17 isolado: `127.0.0.1:5433`, DB `aula_em_dia`, role `aula_dev`.
+- Cluster: `.local/postgres-data/`; log `.local/postgres.log`; esses dados ficam locais e são excluídos pelo `.gitignore`.
+- Segredos e URL: `.env.local` (não versionado); exemplo em `.env.example`. Não colocar valores no relatório, console, ticket ou variável `NEXT_PUBLIC_*`.
+- As migrations Drizzle `0000`–`0007` foram aplicadas com sucesso ao cluster desta cópia, incluindo proveniência da presença, séries recorrentes e constraints/índices.
+- PostgreSQL do Windows existente não foi alterado; esta aplicação usa porta própria.
+- Desenvolvimento: `npm run dev -- --hostname 127.0.0.1 --port 3000`; URL `http://127.0.0.1:3000`.
+- Conta: `/entrar` → alternar para “Criar conta”; cadastro Better Auth grava no DB local.
+- Login e rota auth: Better Auth + Drizzle PostgreSQL; actions de aula avulsa/recorrente, presença e conteúdo estudado usam sessão, validação Zod e owner vindo do servidor.
 
-## Checks
+### Start/stop do PostgreSQL isolado
 
-| Item | Estado | Evidência |
-|---|---|---|
-| Instalação npm do scaffold | Configurado | `package-lock.json` e `node_modules` presentes |
-| Prévia em desenvolvimento | Em execução | `npm run dev -- --hostname 127.0.0.1 --port 3000` (o script usa Webpack); a página `/` está aberta no navegador embutido do Codex; histórico demonstrativo ganhou filtros de busca/matéria/período e o manifesto PWA foi ligado ao layout |
-| Next MCP local | Consultado | `/_next/mcp`: `get_errors` retornou sem erros de configuração/sessão; `get_routes` listou `/` e `/favicon.ico` |
-| Lint/tipos/build | Pendente | Não executados nesta etapa |
-| Banco/SQL | Schema/migrações preparados | `src/db/schema/` e SQL em `drizzle/`; aplicação bloqueada pela senha ainda não configurada; fluxos de aula ainda demonstrativos |
-| Discovery Codex de skills | Listado pelo CLI | `npx skills@latest list --agent codex --json`; nova sessão ainda não observada |
-| Memory/context retrieval | Configurado sem execução | Documentação canônica em `PRODUCT.md`, `AGENTS.md` e `docs/`; Codex carrega AGENTS no projeto; retrieval de sessão limpa não observado |
-| Auditoria de dependências | Validada | `npm audit`: 9 vulnerabilidades de desenvolvimento (5 altas, 4 moderadas); `npm audit --omit=dev`: 0. As correções sugeridas exigem downgrade major do `eslint-config-next`/`drizzle-kit`; não aplicadas automaticamente |
+PowerShell na raiz do projeto:
 
-## Memória e harness
+```powershell
+& 'C:\Program Files\PostgreSQL\17\bin\pg_ctl.exe' start -D .local\postgres-data -o '-p 5433 -h 127.0.0.1' -l .local\postgres.log -w
+& 'C:\Program Files\PostgreSQL\17\bin\pg_ctl.exe' stop -D .local\postgres-data -m fast
+```
 
-Não foi criada memória externa; decisões duráveis ficam nos documentos versionados do projeto. `AGENTS.md` aponta ao escopo canônico, e `docs/setup.md` registra origem, data e estado. A recuperação em contexto limpo e integração de skills em uma sessão nova não foram verificadas.
+Não iniciar uma segunda instância com a mesma pasta. `npm run db:migrate` aplica migrations pendentes; não alterar migrations que já rodaram.
 
-## Pendências e próxima entrega
+## Prévia instalada
 
-Seguir iterando com a prévia local aberta. O preflight recomendado pela versão instalada difere dos nomes de ferramentas disponíveis na versão 16.4.2 do servidor Next MCP; foram consultados `get_errors` e `get_routes`. Para persistir dados reais, configurar DATABASE_URL e BETTER_AUTH_SECRET, aplicar as migrações e proteger cada leitura/escrita com a sessão autenticada. Código publicado no repositório GitHub solicitado pelo usuário; nenhum banco hospedado foi conectado.
+O servidor de desenvolvimento solicitado está configurado em `127.0.0.1:3000`; confira o processo atual antes de iniciar uma segunda cópia. Abrir `/` mostra a demonstração sem conta; `/entrar` cria sessão e abre dados persistentes do próprio estudante.
+
+## iPhone e app
+
+O diretório tem manifesto/metadata PWA, mas localhost só está visível nesta máquina. Para instalar em dispositivo real é preciso publicar a aplicação em domínio HTTPS, acessar no Safari e usar **Compartilhar → Adicionar à Tela de Início**. A instalação direta não requer App Store; publicação remota/hospedagem ainda depende de provider, domínio, ambiente seguro e configuração de privacidade.
+
+## Restrições observadas
+
+- Binding SWC nativo Next para Windows retornou “não é aplicativo Win32 válido”; Next executa via WASM. Turbopack build falha nesta plataforma; dev/build foram configurados com Webpack.
+- Há limitações reais no domínio atual: edição/override de série, conflito explícito, vínculo de professor, confirmação bilateral, repositório de notas privadas, reposição, timezone IANA por perfil e upload ainda não foram implementados. Ver `docs/domain-model.md`/`docs/roadmap.md`.
+- Não afirmar que conta docente, app nativo, backup/restore, deploy público, iPhone físico ou QA e2e estão prontos sem evidência.
+
+## Evidência e entrega
+
+Saída dos comandos executados, checks, estado Git/push, servidor preview e restrições estão em [`RELATORIO-FINAL.md`](../RELATORIO-FINAL.md). Credenciais e detalhes sensíveis nunca são registrados ali.

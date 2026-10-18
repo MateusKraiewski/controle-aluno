@@ -1,39 +1,38 @@
 # Aula em Dia
 
-App web responsivo para o aluno organizar calendário de aulas, matérias, conteúdo estudado e registros de presença ou falta.
+Plataforma mobile first para organizar a relação entre aula planejada, aula realizada, presença, conteúdo estudado e trajetória por matéria. Aluno é a primeira experiência; o produto está sendo estruturado para colaboração com professor por vínculo consentido e autoria separada.
 
 ## Rodar localmente
 
-Requer Node.js 24 e npm. Na raiz do projeto:
+Requer Node.js 24, npm e PostgreSQL. Na raiz:
 
 ```powershell
 npm install
+npm run db:migrate
 npm run dev
 ```
 
-Abra <http://localhost:3000>. O protótipo ainda usa dados de demonstração e não salva informações pessoais.
-O script de desenvolvimento já usa Webpack: os bindings nativos do Turbopack não carregaram neste Windows.
+Use `.env.example` como referência e configure secrets em `.env.local`. Em Windows, dev/build usa Webpack porque os bindings nativos do Turbopack não estão disponíveis no ambiente atual. Abrir `http://localhost:3000`. `/` mostra a demonstração; `/entrar` permite cadastro/login e a agenda persistente do usuário.
 
-Para ativar cadastros e login, configure `DATABASE_URL`, `BETTER_AUTH_URL` e um segredo `BETTER_AUTH_SECRET` (gere um com `npx auth secret`) no `.env.local`. Depois aplique as migrações com `npm run db:migrate`. Sem a senha do PostgreSQL, a rota de autenticação permanece indisponível.
+Neste checkout, um PostgreSQL 17 isolado usa `127.0.0.1:5433`; consulte o [setup](docs/setup.md) para Start/stop e localização privada dos dados. `.env.local` e `.local/` não são versionados.
 
-### Instalar no iPhone
+## iPhone
 
-Abra o endereço publicado no Safari, toque em **Compartilhar** e escolha **Adicionar à Tela de Início**. O Aula em Dia abre em modo de app pelo manifesto PWA e não precisa ser publicado na App Store.
+A aplicação é PWA: com deployment em HTTPS, abrir no Safari → Compartilhar → Adicionar à Tela de Início. Não requer App Store. A prévia local não é acessível ao celular e ainda não houve validação em iPhone real.
 
-## Documentação
+## Produto e documentação
 
-- [Escopo e critérios](PRODUCT.md)
-- [Preparação local](docs/onboarding.md)
-- [Arquitetura e decisões](docs/architecture.md)
+- [Visão, público, diferencial e escopo](PRODUCT.md)
+- [Roadmap e gates por fase](docs/roadmap.md)
+- [Jornadas, estados e UX](docs/ux-flows.md)
+- [Arquitetura e ADRs](docs/architecture.md)
+- [Modelo de domínio atual e futuro](docs/domain-model.md)
 - [Design e acessibilidade](docs/design.md)
-- [Qualidade e limites](docs/quality.md)
-- [Instruções para agentes](AGENTS.md)
-- [Setup e evidências](docs/setup.md)
+- [Plano QA, segurança e release](docs/quality.md)
+- [Setup/evidências](docs/setup.md) · [instruções do projeto](AGENTS.md)
 
-## Estado atual
+## Estado honesto
 
-A tela do aluno mostra agenda de 7 dias, matérias e histórico demonstrativo com busca e filtros. A interface oferece português do Brasil, português de Portugal, inglês e espanhol, além de temas claro e escuro. O manifesto configura instalação como web app no iOS e em outros dispositivos compatíveis. O código de autenticação Better Auth está preparado, mas cadastro e login dependem de configurar o banco; os dados de aula ainda são demonstrativos.
+Estrutura de produto, decisões, roadmap e fluxos aluno-professor foram definidos; a base local tem autenticação, persistência de matéria/aula, séries semanais/quinzenais com múltiplos dias, autoria do relato de presença pelo estudante, registro de conteúdo estudado, PWA, preferências de idioma/tema e testes puros de agenda. A próxima evolução inclui exceções/edição de séries, timezone de perfil, professor/vínculos, relatos bilaterais, reposição, notas privadas e release hospedado. O que está proposto e o que já roda ficam separados em `docs/domain-model.md` e `RELATORIO-FINAL.md`.
 
-## Próxima entrega
-
-Configurar acesso ao PostgreSQL local e concluir a persistência da agenda após ativar a autenticação.
+O ícone src/app/apple-icon.png prepara o atalho de ecrã inicial no iOS.

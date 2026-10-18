@@ -1,5 +1,26 @@
-import StudentDashboard from "@/components/student-dashboard";
+import { headers } from "next/headers";
+import StudentDashboard, { type DashboardLesson } from "@/components/student-dashboard";
+import { auth } from "@/lib/auth";
+import { listLessonsForStudent } from "@/features/lessons/repository";
 
-export default function Home() {
-  return <StudentDashboard />;
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return <StudentDashboard key="demo" />;
+
+  const rows = await listLessonsForStudent(session.user.id);
+
+  const initialLessons: DashboardLesson[] = rows.map((row) => ({
+    id: row.id,
+    subject: row.subject,
+    // Keep the calendar's civil date and local wall time intact across a UTC-hosted server.
+    date: `${row.date}T${row.startsAt.slice(0, 5)}`,
+    time: row.startsAt.slice(0, 5),
+    topic: row.studiedContent || row.plannedContent || row.attendanceNote || "Aula sem conteúdo registrado",
+    teacher: "Professor(a) a definir",
+    status: row.attendance === "attended" ? "attended" : row.attendance === "student_absent" ? "student-absent" : row.attendance === "teacher_absent" ? "teacher-absent" : "upcoming",
+  }));
+
+  return <StudentDashboard key={session.user.id} initialLessons={initialLessons} persisted displayName={session.user.name} />;
 }

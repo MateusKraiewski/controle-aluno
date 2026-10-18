@@ -1,6 +1,6 @@
 # Aula em Dia — instruções do projeto
 
-Leia `PRODUCT.md` antes de mexer em fluxos. O projeto começa com perfil aluno e interface em português. `docs/` é a fonte das decisões; não invente regras de faltas ou vínculos com professor.
+Leia `PRODUCT.md` e `docs/ux-flows.md` antes de mexer em fluxos; leia `docs/domain-model.md` e `docs/architecture.md` antes de persistência/queries. `docs/` é a fonte das decisões; não invente regras de faltas, recorrência ou vínculos com professor. Diferencie estado implementado de roadmap.
 
 ## Stack e comandos
 
@@ -11,17 +11,18 @@ Leia `PRODUCT.md` antes de mexer em fluxos. O projeto começa com perfil aluno e
 - Tipagem: `npm run typecheck`
 - Regras ESLint: `npm run lint:typed` e `npm run lint:rules`
 - Build: `npm run build`
-- Vitest está instalado, mas ainda não há testes de produto.
+- Vitest executa testes de domínio de calendário/recorrência; amplie coverage antes de anunciar regras sensíveis como completas.
 
 ## Acordos
 
 - Faça a menor mudança completa e preserve requisitos de privacidade e acessibilidade.
 - Prefira Server Components; crie fronteiras client apenas para interações que precisam de estado no navegador.
 - Dados demonstrativos devem estar identificados como exemplo e não podem parecer registros salvos.
-- A apresentação não acessa banco diretamente. Valide entradas no servidor com Zod, use consultas parametrizadas e projete apenas campos necessários.
+- A apresentação não acessa banco diretamente. Use `app → feature service → repository → db`; valide entradas no servidor com Zod, use consultas parametrizadas e projete apenas campos necessários.
 - Não coloque credenciais em arquivos versionados, logs, erros ou propriedades `NEXT_PUBLIC_*`.
 - Não implemente autenticação fictícia nem use armazenamento local para dados pessoais. Antes de dados reais, implemente autenticação e autorização no servidor.
 - Consulte as skills locais aplicáveis em `.agents/skills/`. A presença de um arquivo não prova que o cliente o descobriu.
+- O catálogo atual não contém skill de PMO/UX Research/QA dedicada. Registre plano, jornadas, riscos, critérios de aceite e evidências nos docs; não afirme execução de uma skill indisponível.
 - Atualize o documento responsável quando comportamento, comando ou decisão mudar.
 - Não publique nem conecte serviços pagos sem solicitação específica.
 
