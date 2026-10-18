@@ -1,0 +1,1 @@
+ALTER TABLE "lessons" ADD CONSTRAINT "lessons_end_after_start" CHECK ("lessons"."ends_at" > "lessons"."starts_at");

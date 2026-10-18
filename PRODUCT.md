@@ -44,8 +44,8 @@ O aluno precisa lembrar quando teve aula e guardar o que estudou. Agenda, anota�
 ## Restrições e decisões técnicas
 
 - Next.js App Router, TypeScript, Tailwind CSS e npm.
-- Persistência planejada com PostgreSQL e Drizzle ORM. O provedor ainda não foi escolhido e nenhuma conexão externa está configurada.
-- Sem autenticação no protótipo local. Autenticação e isolamento dos dados no servidor são pré-requisitos para dados reais.
+- PostgreSQL e Drizzle ORM; o schema inicial de matérias, aulas e presenças está versionado. O servidor local exige credenciais que ainda não estão configuradas no projeto.
+- Sem autenticação no protótipo local. Autenticação e isolamento dos dados no servidor são pré-requisitos para dados reais; por isso a migração ainda não foi aplicada e a interface segue demonstrativa.
 - Nenhuma integração externa ou serviço pago faz parte do escopo atual.
 
 ## Hipóteses e pendências
@@ -71,7 +71,7 @@ A tela inicial do aluno apresenta agenda de 7 dias, próxima aula, matérias, hi
 
 ## Próxima entrega
 
-Escolher provedor de PostgreSQL e autenticação antes de desenhar o schema persistente e conectar os registros de aula; depois, adicionar notas de conteúdo estudado e filtros por período.
+Configurar credenciais de uma instância PostgreSQL e implementar autenticação/autorização por aluno antes de aplicar a migração e conectar a interface. O modelo inicial já contempla matérias, data/horário, conteúdo previsto/estudado e estados distintos de presença/falta. Recorrência segue pendente e não está modelada.
 
 ## Manutenção
 
