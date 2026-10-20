@@ -13,7 +13,7 @@ export async function listLessonsForStudent(studentId: string) {
     id: lessons.id, subject: subjects.name, date: lessons.lessonDate, startsAt: lessons.startsAt, endsAt: lessons.endsAt,
     seriesId: lessons.seriesId, isException: lessons.isException, status: lessons.status, cancellationReason: lessons.cancellationReason,
     plannedContent: lessons.plannedContent, studiedContent: lessons.studiedContent,
-    attendance: lessons.attendance, attendanceNote: lessons.attendanceNote,
+    attendance: lessons.attendance, attendanceNote: lessons.attendanceNote, replacesLessonId: lessons.replacesLessonId,
   }).from(lessons).innerJoin(subjects, and(eq(lessons.subjectId, subjects.id), eq(lessons.studentId, subjects.studentId)))
     .where(eq(lessons.studentId, studentId)).orderBy(asc(lessons.lessonDate), asc(lessons.startsAt));
 }
@@ -164,7 +164,12 @@ export async function deleteLessons(studentId: string, lessonId: string, scope: 
     const target = await lockTarget(tx, studentId, lessonId);
     if (!target) return null;
     const siblings = siblingFilter(studentId, target, scope);
-    const removed = siblings ? await tx.delete(lessons).where(siblings).returning({ id: lessons.id }) : [];
+    const siblingIds = siblings ? (await tx.select({ id: lessons.id }).from(lessons).where(siblings)).map((row) => row.id) : [];
+    const ids = [target.id, ...siblingIds];
+    // A make-up lesson outlives the deleted original; only the link is dropped.
+    await tx.update(lessons).set({ replacesLessonId: null, updatedAt: new Date() })
+      .where(and(eq(lessons.studentId, studentId), inArray(lessons.replacesLessonId, ids)));
+    const removed = siblingIds.length ? await tx.delete(lessons).where(and(eq(lessons.studentId, studentId), inArray(lessons.id, siblingIds))).returning({ id: lessons.id }) : [];
     await tx.delete(lessons).where(and(eq(lessons.id, target.id), eq(lessons.studentId, studentId)));
     if (target.seriesId) {
       const [remaining] = await tx.select({ id: lessons.id }).from(lessons)
@@ -172,6 +177,31 @@ export async function deleteLessons(studentId: string, lessonId: string, scope: 
       if (!remaining) await tx.delete(lessonSeries).where(and(eq(lessonSeries.id, target.seriesId), eq(lessonSeries.studentId, studentId)));
     }
     return { deleted: removed.length + 1 };
+  });
+}
+
+/**
+ * Schedules a make-up lesson linked to the original. An original without its own record is
+ * cancelled with the reason; one already recorded (e.g. an absence) keeps that record.
+ */
+export async function insertMakeup(studentId: string, originalId: string, slot: { date: string; startsAt: string; endsAt: string; reason: string | null }) {
+  return getDb().transaction(async (tx) => {
+    const [original] = await tx.select({ id: lessons.id, subjectId: lessons.subjectId, plannedContent: lessons.plannedContent, status: lessons.status, attendance: lessons.attendance })
+      .from(lessons).where(and(eq(lessons.id, originalId), eq(lessons.studentId, studentId))).limit(1).for("update");
+    if (!original) return { outcome: "not_found" as const };
+    const [existing] = await tx.select({ id: lessons.id }).from(lessons)
+      .where(and(eq(lessons.studentId, studentId), eq(lessons.replacesLessonId, original.id))).limit(1);
+    if (existing) return { outcome: "already_replaced" as const };
+    const now = new Date();
+    if (original.status === "planned" && original.attendance === "unrecorded") {
+      await tx.update(lessons).set({ status: "cancelled", cancellationReason: slot.reason, cancelledAt: now, updatedAt: now })
+        .where(and(eq(lessons.id, original.id), eq(lessons.studentId, studentId)));
+    }
+    const [created] = await tx.insert(lessons).values({
+      studentId, subjectId: original.subjectId, lessonDate: slot.date, startsAt: `${slot.startsAt}:00`, endsAt: `${slot.endsAt}:00`,
+      plannedContent: original.plannedContent, replacesLessonId: original.id,
+    }).returning({ id: lessons.id });
+    return { outcome: "created" as const, id: created!.id };
   });
 }
 

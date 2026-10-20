@@ -86,6 +86,8 @@ export const lessons = pgTable(
     status: lessonStatus("status").notNull().default("planned"),
     cancellationReason: text("cancellation_reason"),
     cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    // A make-up lesson points at the occurrence it replaces; both stay in the history.
+    replacesLessonId: uuid("replaces_lesson_id"),
     startsAt: time("starts_at").notNull(),
     endsAt: time("ends_at").notNull(),
     plannedContent: text("planned_content"),
@@ -116,5 +118,11 @@ export const lessons = pgTable(
       columns: [table.seriesId, table.studentId],
       foreignColumns: [lessonSeries.id, lessonSeries.studentId],
     }),
+    foreignKey({
+      name: "lessons_replaces_student_fk",
+      columns: [table.replacesLessonId, table.studentId],
+      foreignColumns: [table.id, table.studentId],
+    }),
+    uniqueIndex("lessons_replaces_lesson_unique").on(table.replacesLessonId),
   ],
 );

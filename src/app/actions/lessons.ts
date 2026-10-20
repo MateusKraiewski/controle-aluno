@@ -6,7 +6,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { generateWeeklyDates } from "@/features/calendar/domain";
 import {
-  cancelLessons, deleteLessons, findConflicts, getLessonSlot, insertLesson, insertWeeklySeries, listScopeTargets, restoreLesson,
+  cancelLessons, deleteLessons, findConflicts, getLessonSlot, insertLesson, insertMakeup, insertWeeklySeries, listScopeTargets, restoreLesson,
   setLessonAttendance, setStudiedContent, updateLessons,
 } from "@/features/lessons/repository";
 
@@ -158,6 +158,34 @@ export async function removeLesson(lessonId: string, scope: unknown) {
     refresh();
     return { ok: true as const, deleted: result.deleted };
   } catch { return { ok: false as const, error: "Não foi possível excluir a aula. Tente novamente." }; }
+}
+
+const makeupInput = z.object({
+  date: z.iso.date(),
+  startsAt: timeSchema,
+  endsAt: timeSchema,
+  reason: z.string().trim().max(300).optional(),
+  allowConflicts: z.boolean().default(false),
+}).refine((value) => value.endsAt > value.startsAt, endAfterStart);
+
+export async function scheduleMakeup(lessonId: string, input: unknown) {
+  const studentId = await currentUserId();
+  if (!studentId) return { ok: false as const, error: "Entre na sua conta para repor aulas." };
+  const id = z.uuid().safeParse(lessonId);
+  const parsed = makeupInput.safeParse(input);
+  if (!id.success || !parsed.success) return { ok: false as const, error: parsed.error?.issues[0]?.message ?? "Confira os dados da reposição." };
+  const { allowConflicts, reason, ...slot } = parsed.data;
+  try {
+    if (!allowConflicts) {
+      const conflict = await conflictFailure(studentId, { ...slot, dates: [slot.date], excludeIds: [id.data] });
+      if (conflict) return conflict;
+    }
+    const result = await insertMakeup(studentId, id.data, { ...slot, reason: reason || null });
+    if (result.outcome === "not_found") return { ok: false as const, error: "Aula não encontrada." };
+    if (result.outcome === "already_replaced") return { ok: false as const, error: "Esta aula já tem uma reposição marcada." };
+    refresh();
+    return { ok: true as const, id: result.id };
+  } catch { return { ok: false as const, error: "Não foi possível marcar a reposição. Tente novamente." }; }
 }
 
 export async function updateAttendance(lessonId: string, status: unknown, note?: string) {

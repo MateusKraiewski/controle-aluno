@@ -64,6 +64,13 @@
       "when": 1792525360950,
       "tag": "0008_lesson_state_and_exceptions",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792526740157,
+      "tag": "0009_lesson_makeup",
+      "breakpoints": true
     }
   ]
 }

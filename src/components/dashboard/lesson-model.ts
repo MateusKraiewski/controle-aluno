@@ -6,7 +6,10 @@ export type DashboardLesson = {
   id: string; subject: string; date: Date | string; time: string; endTime: string;
   plannedContent: string; studiedContent: string | null; teacher: string; status: Status;
   isSeries: boolean; isException: boolean; cancellationReason: string | null;
+  /** Make-up links by civil date (YYYY-MM-DD); the history keeps both lessons. */
+  replaces: LessonLink | null; replacedBy: LessonLink | null;
 };
+export type LessonLink = { id: string; date: string };
 export type Lesson = Omit<DashboardLesson, "date"> & { date: Date };
 export type AttendanceStatus = Exclude<Status, "cancelled">;
 
@@ -21,7 +24,7 @@ export function dateAt(offset: number, time: string) {
 }
 
 function demoLesson(id: string, subject: string, offset: number, time: string, endTime: string, plannedContent: string, teacher: string, status: Status): Lesson {
-  return { id, subject, date: dateAt(offset, time), time, endTime, plannedContent, studiedContent: null, teacher, status, isSeries: false, isException: false, cancellationReason: null };
+  return { id, subject, date: dateAt(offset, time), time, endTime, plannedContent, studiedContent: null, teacher, status, isSeries: false, isException: false, cancellationReason: null, replaces: null, replacedBy: null };
 }
 
 export function demoLessons(): Lesson[] {

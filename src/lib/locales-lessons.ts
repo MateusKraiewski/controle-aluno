@@ -4,6 +4,7 @@ import type { Locale } from "./locales";
 export const lessonMessages: Record<Locale, Record<string, string>> = {
   "pt-BR": {},
   "pt-PT": {
+    "Marcar reposição": "Marcar reposição", "Reposição marcada. A aula original continua no histórico.": "Reposição marcada. A aula original continua no histórico.", "Repor esta aula": "Repor esta aula", "Uma aula ainda sem registro fica cancelada com o motivo; uma falta já registrada é mantida.": "Uma aula ainda sem registo fica cancelada com o motivo; uma falta já registada é mantida.", "Nova data": "Nova data", "Motivo (opcional)": "Motivo (opcional)", "Repor mesmo assim": "Repor mesmo assim", "Reposição da aula de": "Reposição da aula de", "Reposta em": "Reposta em", "Esta aula já tem uma reposição marcada.": "Esta aula já tem uma reposição marcada.",
     "Registro atualizado nesta demonstração.": "Registo atualizado nesta demonstração.", "Presença salva no seu histórico.": "Presença guardada no seu histórico.", "Fechar aviso": "Fechar aviso",
     "Toque numa aula para editar, cancelar ou excluir. ⚠ indica horário sobreposto.": "Toque numa aula para editar, cancelar ou eliminar. ⚠ indica horário sobreposto.",
     "Atualize a situação para registrar presença ou falta no seu histórico.": "Atualize a situação para registar presença ou falta no seu histórico.", "Os dados de demonstração não são salvos depois que a página fecha.": "Os dados de demonstração não são guardados depois de fechar a página.",
@@ -23,6 +24,7 @@ export const lessonMessages: Record<Locale, Record<string, string>> = {
     "Aula sem conteúdo registrado": "Aula sem conteúdo registado",
   },
   en: {
+    "Marcar reposição": "Schedule make-up", "Reposição marcada. A aula original continua no histórico.": "Make-up scheduled. The original lesson stays in your history.", "Repor esta aula": "Make up this lesson", "Uma aula ainda sem registro fica cancelada com o motivo; uma falta já registrada é mantida.": "A lesson with no record yet is cancelled with the reason; a recorded absence is kept.", "Nova data": "New date", "Motivo (opcional)": "Reason (optional)", "Repor mesmo assim": "Schedule anyway", "Reposição da aula de": "Make-up for the lesson on", "Reposta em": "Made up on", "Esta aula já tem uma reposição marcada.": "This lesson already has a make-up scheduled.",
     "Registro atualizado nesta demonstração.": "Record updated in this demo.", "Presença salva no seu histórico.": "Attendance saved to your history.", "Fechar aviso": "Dismiss notice",
     "Toque numa aula para editar, cancelar ou excluir. ⚠ indica horário sobreposto.": "Tap a lesson to edit, cancel or delete it. ⚠ marks overlapping times.",
     "Atualize a situação para registrar presença ou falta no seu histórico.": "Update the status to record attendance or absence in your history.", "Os dados de demonstração não são salvos depois que a página fecha.": "Demo data is not kept after the page closes.",
@@ -42,6 +44,7 @@ export const lessonMessages: Record<Locale, Record<string, string>> = {
     "Aula sem conteúdo registrado": "No content recorded for this lesson",
   },
   es: {
+    "Marcar reposição": "Programar recuperación", "Reposição marcada. A aula original continua no histórico.": "Recuperación programada. La clase original sigue en el historial.", "Repor esta aula": "Recuperar esta clase", "Uma aula ainda sem registro fica cancelada com o motivo; uma falta já registrada é mantida.": "Una clase sin registro se cancela con el motivo; una ausencia ya registrada se mantiene.", "Nova data": "Nueva fecha", "Motivo (opcional)": "Motivo (opcional)", "Repor mesmo assim": "Recuperar de todos modos", "Reposição da aula de": "Recuperación de la clase del", "Reposta em": "Recuperada el", "Esta aula já tem uma reposição marcada.": "Esta clase ya tiene una recuperación programada.",
     "Registro atualizado nesta demonstração.": "Registro actualizado en esta demostración.", "Presença salva no seu histórico.": "Asistencia guardada en tu historial.", "Fechar aviso": "Cerrar aviso",
     "Toque numa aula para editar, cancelar ou excluir. ⚠ indica horário sobreposto.": "Toca una clase para editarla, cancelarla o eliminarla. ⚠ indica horario superpuesto.",
     "Atualize a situação para registrar presença ou falta no seu histórico.": "Actualiza la situación para registrar asistencia o ausencia en tu historial.", "Os dados de demonstração não são salvos depois que a página fecha.": "Los datos de demostración no se guardan al cerrar la página.",

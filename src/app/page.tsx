@@ -11,6 +11,8 @@ export default async function Home() {
 
   const rows = await listLessonsForStudent(session.user.id);
 
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  const replacedBy = new Map(rows.filter((row) => row.replacesLessonId).map((row) => [row.replacesLessonId!, { id: row.id, date: row.date }]));
   const initialLessons: DashboardLesson[] = rows.map((row) => ({
     id: row.id,
     subject: row.subject,
@@ -25,6 +27,8 @@ export default async function Home() {
     isSeries: row.seriesId !== null,
     isException: row.isException,
     cancellationReason: row.cancellationReason,
+    replaces: row.replacesLessonId && byId.has(row.replacesLessonId) ? { id: row.replacesLessonId, date: byId.get(row.replacesLessonId)!.date } : null,
+    replacedBy: replacedBy.get(row.id) ?? null,
   }));
 
   return <StudentDashboard key={session.user.id} initialLessons={initialLessons} persisted displayName={session.user.name} />;

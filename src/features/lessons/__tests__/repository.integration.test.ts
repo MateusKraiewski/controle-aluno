@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { closeDatabase, getDb } from "@/db";
 import { lessonSeries, lessons, subjects, user } from "@/db/schema";
 import {
-  cancelLessons, deleteLessons, findConflicts, insertLesson, insertWeeklySeries, listLessonsForStudent, listScopeTargets,
+  cancelLessons, deleteLessons, findConflicts, insertLesson, insertMakeup, insertWeeklySeries, listLessonsForStudent, listScopeTargets,
   restoreLesson, setLessonAttendance, setStudiedContent, updateLessons,
 } from "../repository";
 
@@ -109,5 +109,24 @@ describeDb("lessons repository (PostgreSQL)", () => {
     const remaining = await getDb().select({ id: lessons.id }).from(lessons).where(and(eq(lessons.studentId, alice), inArray(lessons.id, created.map((item) => item.id))));
     expect(remaining.map((row) => row.id)).toEqual([created[2]!.id]);
     expect(await deleteLessons(alice, created[2]!.id, "this")).toEqual({ deleted: 1 });
+  });
+  it("links a make-up to its original, cancels only unrecorded originals and survives deleting the original", async () => {
+    const original = await insertLesson(alice, { subject: "Artes", topic: "Cor", date: "2030-07-01", startsAt: "08:00", endsAt: "09:00" });
+    expect(await insertMakeup(bob, original, { date: "2030-07-08", startsAt: "08:00", endsAt: "09:00", reason: null })).toEqual({ outcome: "not_found" });
+    const made = await insertMakeup(alice, original, { date: "2030-07-08", startsAt: "08:00", endsAt: "09:00", reason: "Doente" });
+    expect(made.outcome).toBe("created");
+    expect(await insertMakeup(alice, original, { date: "2030-07-09", startsAt: "08:00", endsAt: "09:00", reason: null })).toEqual({ outcome: "already_replaced" });
+    const rows = await listLessonsForStudent(alice);
+    expect(rows.find((row) => row.id === original)).toMatchObject({ status: "cancelled", cancellationReason: "Doente" });
+    const makeupId = made.outcome === "created" ? made.id : "";
+    expect(rows.find((row) => row.id === makeupId)).toMatchObject({ replacesLessonId: original, subject: "Artes", plannedContent: "Cor", status: "planned" });
+
+    const absent = await insertLesson(alice, { subject: "Artes", topic: "Forma", date: "2030-07-02", startsAt: "08:00", endsAt: "09:00" });
+    await setLessonAttendance(alice, absent, "student_absent", null);
+    await insertMakeup(alice, absent, { date: "2030-07-10", startsAt: "08:00", endsAt: "09:00", reason: null });
+    expect((await listLessonsForStudent(alice)).find((row) => row.id === absent)).toMatchObject({ status: "planned", attendance: "student_absent" });
+
+    expect(await deleteLessons(alice, original, "this")).toEqual({ deleted: 1 });
+    expect((await listLessonsForStudent(alice)).find((row) => row.id === makeupId)?.replacesLessonId).toBeNull();
   });
 });

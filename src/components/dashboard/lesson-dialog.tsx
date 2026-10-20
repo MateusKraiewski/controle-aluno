@@ -5,6 +5,7 @@ import { cancelLesson, createLesson, editLesson, removeLesson, restoreCancelledL
 import { generateWeeklyDates, intervalsOverlap } from "@/features/calendar/domain";
 import { translate, type Locale } from "@/lib/locales";
 import { dateAt, formatDate, fromDateKey, localDateKey, type Lesson } from "./lesson-model";
+import { MakeupSection } from "./makeup-section";
 
 type Scope = "this" | "following" | "all";
 type Draft = { subject: string; topic: string; date: string; startsAt: string; endsAt: string; repeat: string; weekdays: number[]; endsOn: string };
@@ -92,7 +93,7 @@ export function LessonDialog({ mode, persisted, locale, existing, onClose, onLoc
         onLocalChange((lessons) => lessons.map((lesson) => lesson.id === editing.id ? { ...lesson, subject: draft.subject, plannedContent: draft.topic, date: fromDateKey(draft.date, draft.startsAt), time: draft.startsAt, endTime: draft.endsAt } : lesson));
         onDone(t("Aula alterada nesta demonstração.")); return;
       }
-      const created = dates.map((key, index): Lesson => ({ id: `demo-${Date.now()}-${index}`, subject: draft.subject, date: fromDateKey(key, draft.startsAt), time: draft.startsAt, endTime: draft.endsAt, plannedContent: draft.topic, studiedContent: null, teacher: "Professor(a) a definir", status: "upcoming", isSeries: dates.length > 1, isException: false, cancellationReason: null }));
+      const created = dates.map((key, index): Lesson => ({ id: `demo-${Date.now()}-${index}`, subject: draft.subject, date: fromDateKey(key, draft.startsAt), time: draft.startsAt, endTime: draft.endsAt, plannedContent: draft.topic, studiedContent: null, teacher: "Professor(a) a definir", status: "upcoming", isSeries: dates.length > 1, isException: false, cancellationReason: null, replaces: null, replacedBy: null }));
       onLocalChange((lessons) => [...lessons, ...created]);
       onDone(t("Aula adicionada à demonstração desta sessão. Crie uma conta para salvar seus registros.")); return;
     }
@@ -171,6 +172,7 @@ export function LessonDialog({ mode, persisted, locale, existing, onClose, onLoc
         <div className="dialog-actions"><button type="button" className="secondary-button" onClick={onClose}>{t("Cancelar")}</button><button type="submit" className="primary-button" disabled={busy}>{t(editing ? "Salvar alterações" : "Adicionar à agenda")}</button></div>
       </form>
       {editing ? <div className="lesson-danger-zone">
+        <MakeupSection lesson={editing} persisted={persisted} locale={locale} onLocalChange={onLocalChange} onDone={onDone} />
         {editing.status === "cancelled"
           ? <button type="button" className="secondary-button" disabled={busy} onClick={restoreSelected}>{t("Reativar aula")}</button>
           : <div className="cancel-row"><label>{t("Motivo do cancelamento (opcional)")}<input value={cancelReason} maxLength={300} onChange={(event) => setCancelReason(event.target.value)} /></label><button type="button" className="secondary-button" disabled={busy} onClick={cancelSelected}>{t(scope === "this" ? "Cancelar esta aula" : "Cancelar aulas selecionadas")}</button></div>}

@@ -30,6 +30,8 @@ export function LessonRow({ lesson, editable, locale, persisted = false, onChang
     <div className="lesson-main"><div className="lesson-title-line"><strong>{lesson.subject}</strong><StatusPill status={lesson.status} locale={locale} />{lesson.isException ? <span className="exception-tag">{t("alteração nesta data")}</span> : null}</div>
       <p>{(editable ? lesson.plannedContent : lessonSummary(lesson)) || t("Aula sem conteúdo registrado")}</p>
       {editable && lesson.studiedContent ? <p className="studied-line"><span>{t("Estudado:")}</span> {lesson.studiedContent}</p> : null}
+      {lesson.replaces ? <p className="studied-line link-line"><span>{t("Reposição da aula de")}</span> {formatDate(lesson.replaces.date, { day: "numeric", month: "short" }, locale)}</p> : null}
+      {lesson.replacedBy ? <p className="studied-line link-line"><span>{t("Reposta em")}</span> {formatDate(lesson.replacedBy.date, { day: "numeric", month: "short" }, locale)}</p> : null}
       {cancelled && lesson.cancellationReason ? <p className="studied-line"><span>{t("Motivo:")}</span> {lesson.cancellationReason}</p> : null}
       <span className="lesson-meta">{formatDate(lesson.date, { weekday: "short", day: "numeric", month: "short" }, locale)} · {lesson.time}–{lesson.endTime} · {lesson.teacher}</span></div>
     {editable && !cancelled ? <label className="status-select"><span className="sr-only">{t("Situação de")} {lesson.subject}</span><select value={lesson.status} aria-label={`${t("Registrar situação de")} ${lesson.subject}`} onChange={(event) => onChange?.(event.target.value as AttendanceStatus)}>
