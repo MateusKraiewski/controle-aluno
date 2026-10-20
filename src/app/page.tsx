@@ -17,9 +17,14 @@ export default async function Home() {
     // Keep the calendar's civil date and local wall time intact across a UTC-hosted server.
     date: `${row.date}T${row.startsAt.slice(0, 5)}`,
     time: row.startsAt.slice(0, 5),
-    topic: row.studiedContent || row.plannedContent || row.attendanceNote || "Aula sem conteúdo registrado",
+    endTime: row.endsAt.slice(0, 5),
+    plannedContent: row.plannedContent ?? "",
+    studiedContent: row.studiedContent,
     teacher: "Professor(a) a definir",
-    status: row.attendance === "attended" ? "attended" : row.attendance === "student_absent" ? "student-absent" : row.attendance === "teacher_absent" ? "teacher-absent" : "upcoming",
+    status: row.status === "cancelled" ? "cancelled" : row.attendance === "attended" ? "attended" : row.attendance === "student_absent" ? "student-absent" : row.attendance === "teacher_absent" ? "teacher-absent" : "upcoming",
+    isSeries: row.seriesId !== null,
+    isException: row.isException,
+    cancellationReason: row.cancellationReason,
   }));
 
   return <StudentDashboard key={session.user.id} initialLessons={initialLessons} persisted displayName={session.user.name} />;

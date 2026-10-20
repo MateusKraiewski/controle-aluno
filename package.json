@@ -10,6 +10,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test:watch": "vitest",
     "test": "vitest run",
+    "test:db": "vitest run --mode db",
     "lint:typed": "eslint --config eslint.typed.config.mjs .",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

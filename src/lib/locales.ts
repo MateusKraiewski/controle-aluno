@@ -1,3 +1,5 @@
+import { lessonMessages } from "./locales-lessons";
+
 export type Locale = "pt-BR" | "pt-PT" | "en" | "es";
 
 const messages: Record<Locale, Record<string, string>> = {
@@ -102,5 +104,5 @@ export const localeOptions: { value: Locale; label: string }[] = [
 ];
 
 export function translate(locale: Locale, text: string) {
-  return messages[locale][text] ?? text;
+  return messages[locale][text] ?? lessonMessages[locale][text] ?? text;
 }
