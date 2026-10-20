@@ -129,3 +129,10 @@ export const lessons = pgTable(
     uniqueIndex("lessons_replaces_lesson_unique").on(table.replacesLessonId),
   ],
 );
+
+/** Per-account settings kept on the server; the IANA time zone drives new series and "today". */
+export const profiles = pgTable("profiles", {
+  userId: text("user_id").primaryKey().references(() => user.id),
+  timeZone: text("time_zone").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});

@@ -72,6 +72,14 @@ const table: Record<string, [string, string, string]> = {
   "Editar registro da aula": ["Editar registo da aula","Edit lesson record","Editar registro de la clase"],
   "Registrar o que foi estudado": ["Registar o que foi estudado","Record what was studied","Registrar lo estudiado"],
   "Cada campo precisa respeitar o limite de caracteres.": ["Cada campo tem de respeitar o limite de caracteres.","Each field must stay within its character limit.","Cada campo debe respetar el límite de caracteres."],
+  "Perfil": ["Perfil","Profile","Perfil"],
+  "Fuso horário": ["Fuso horário","Time zone","Zona horaria"],
+  "Fuso horário salvo.": ["Fuso horário guardado.","Time zone saved.","Zona horaria guardada."],
+  "Novas séries de aulas usam este fuso. Aulas já criadas mantêm a data e a hora que você escolheu.": ["As novas séries de aulas usam este fuso. As aulas já criadas mantêm a data e a hora que escolheu.","New lesson series use this time zone. Existing lessons keep the date and time you chose.","Las nuevas series de clases usan esta zona. Las clases ya creadas mantienen la fecha y hora elegidas."],
+  "Ainda não definido; o navegador indica:": ["Ainda não definido; o navegador indica:","Not set yet; your browser reports:","Aún no definida; el navegador indica:"],
+  "Salvar": ["Guardar","Save","Guardar"],
+  "Neste dispositivo": ["Neste dispositivo","On this device","En este dispositivo"],
+  "Escolha um fuso horário válido.": ["Escolha um fuso horário válido.","Choose a valid time zone.","Elige una zona horaria válida."],
   "Vínculo não encontrado.": ["Ligação não encontrada.", "Link not found.", "Vínculo no encontrado."],
 };
 

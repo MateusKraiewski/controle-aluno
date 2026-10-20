@@ -99,6 +99,13 @@
       "when": 1792528439224,
       "tag": "0013_private_notes",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792528601174,
+      "tag": "0014_profiles",
+      "breakpoints": true
     }
   ]
 }

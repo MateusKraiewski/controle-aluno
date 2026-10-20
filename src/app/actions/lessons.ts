@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { refresh } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { getProfileTimeZone } from "@/features/profile/repository";
 import { generateWeeklyDates } from "@/features/calendar/domain";
 import {
   cancelLessons, cancelLessonsInRange, countBreakLessons, deleteLessons, findConflicts, getLessonSlot, insertLesson, insertMakeup, insertWeeklySeries, listScopeTargets, restoreLesson,
@@ -63,6 +64,8 @@ export async function createLesson(input: unknown) {
   let dates = [data.date];
   let intervalWeeks = 1;
   if (data.repeat !== "none") {
+    // The profile zone, when set, wins over the one the browser reported.
+    data.timeZone = await getProfileTimeZone(studentId) ?? data.timeZone;
     if (!data.endsOn || data.weekdays.length === 0) return { ok: false as const, error: "Escolha até quando repetir e os dias da semana." };
     try { new Intl.DateTimeFormat("en", { timeZone: data.timeZone }); }
     catch { return { ok: false as const, error: "Escolha um fuso horário válido." }; }
