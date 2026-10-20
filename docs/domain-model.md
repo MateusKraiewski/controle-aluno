@@ -65,7 +65,15 @@ Separar **estado da aula** (planned/completed/cancelled/rescheduled) de **estado
 
 ## Modelo implementado hoje
 
-`user`, `subjects(student_id, name, color)`, `lesson_series`, `lessons(student_id, subject_id, series_id, date, starts_at, ends_at, planned/studied_content, attendance, attendance_note, attendance_recorded_by/at)` e tabelas Better Auth; migrations `0000`–`0007`. Há criação de aulas avulsas e séries semanais/quinzenais, múltiplos dias por série, até 300 ocorrências, atomicidade, timezone da série e autoria/hora do estado aluno. `attendance_status` atual ainda não contém duas fontes independentes: no modo aluno, “Relatei falta do professor” é apenas auto-declaração do aluno, não confirmação oficial nem dado do professor. Vínculo de professor, exceção/edição por escopo, relatórios independentes e notas privadas continuam propostas. Não ampliar autoridade do professor sobre esse enum.
+`user`, `subjects(student_id, name, color)`, `lesson_series`, `lessons(student_id, subject_id, series_id, original_lesson_date, lesson_date, starts_at, ends_at, status, cancellation_reason, cancelled_at, is_exception, planned/studied_content, attendance, attendance_note, attendance_recorded_by/at)` e tabelas Better Auth; migrations `0000`–`0008`. Há criação de aulas avulsas e séries semanais/quinzenais (até 300 ocorrências, atomicidade, timezone da série) e autoria/hora do estado aluno.
+
+**Estado da aula separado da presença (0008):** `status` é `planned` ou `cancelled`; cancelar guarda motivo e momento, nunca altera `attendance` e a aula cancelada não aceita registro de presença. Reativar volta a `planned`.
+
+**Exceções e escopo de série (0008):** cada ocorrência de série guarda `original_lesson_date` (data gerada pela regra; único por série). Editar ou mover uma ocorrência com escopo **somente esta** marca `is_exception`. Os escopos **esta e as próximas** e **toda a série** alteram horário, matéria e conteúdo previsto (nunca a data) e, por cancelamento/exclusão, cancelam ou apagam ocorrências irmãs; ficam de fora ocorrências passadas (data civil no fuso da série), com presença registrada, canceladas ou exceções. "Toda a série" também atualiza a regra em `lesson_series`. Dividir a série em duas regras, feriados automáticos e restaurar padrão de uma exceção continuam propostos.
+
+**Conflitos:** criar, editar e reativar verificam sobreposição `[início, fim)` com aulas `planned` do próprio aluno; o servidor devolve os conflitos e só grava com confirmação explícita (`allowConflicts`).
+
+`attendance_status` atual ainda não contém duas fontes independentes: no modo aluno, “Relatei falta do professor” é apenas auto-declaração do aluno, não confirmação oficial nem dado do professor. Vínculo de professor, relatórios independentes, reposição ligada e notas privadas continuam propostas. Não ampliar autoridade do professor sobre esse enum.
 
 ## Evolução de schema sem perda
 

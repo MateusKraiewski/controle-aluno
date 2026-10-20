@@ -7,6 +7,7 @@
 - `npm run lint:rules` — contrato dos plugins locais.
 - `npm run typecheck` — tipos/rotas Next e TypeScript.
 - `npm test` — Vitest; regras puras de intervalo e geração semanal.
+- `npm run test:db` — inclui testes de integração do repositório no PostgreSQL configurado em `.env.local` (isolamento entre contas, escopos de série, cancelamento e exclusão). Só executa contra `localhost`/`127.0.0.1`; cria e remove os próprios utilizadores de teste.
 - `npm run build` — build de produção Webpack (binding Turbopack indisponível no Windows atual).
 - `npm run db:generate` / `npm run db:migrate` — migrações Drizzle.
 

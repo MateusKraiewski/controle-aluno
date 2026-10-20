@@ -11,7 +11,7 @@ Leia `PRODUCT.md` e `docs/ux-flows.md` antes de mexer em fluxos; leia `docs/doma
 - Tipagem: `npm run typecheck`
 - Regras ESLint: `npm run lint:typed` e `npm run lint:rules`
 - Build: `npm run build`
-- Vitest executa testes de domínio de calendário/recorrência; amplie coverage antes de anunciar regras sensíveis como completas.
+- Testes: `npm test` (domínio puro) e `npm run test:db` (integração PostgreSQL local; requer o cluster da porta 5433 ligado). Amplie coverage antes de anunciar regras sensíveis como completas.
 
 ## Acordos
 

@@ -18,7 +18,7 @@ Dev/build usam Webpack porque o binding SWC/Turbopack desta instalação Windows
 
 ## Qualidade e fluxo de trabalho
 
-Antes de submeter alteração: `npm run lint`, `npm run lint:typed`, `npm run lint:rules`, `npm run typecheck`, `npm test`, `npm run build`. Em mudanças de schema, recriar banco em branco e validar migration; em auth/presença/vínculos, aplicar matriz de autorização e revisar diferencialmente.
+Antes de submeter alteração: `npm run lint`, `npm run lint:typed`, `npm run lint:rules`, `npm run typecheck`, `npm test`, `npm run test:db` (com o PostgreSQL local ligado), `npm run build`. Em mudanças de schema, recriar banco em branco e validar migration; em auth/presença/vínculos, aplicar matriz de autorização e revisar diferencialmente.
 
 Leia `PRODUCT.md`, `docs/roadmap.md`, `docs/ux-flows.md`, `docs/domain-model.md` e `docs/architecture.md` conforme o escopo. Escreva primeiro critérios de aceite e não transforme status futuro em promessa de feature implementada.
 

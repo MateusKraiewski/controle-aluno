@@ -77,3 +77,28 @@ A revisão de segurança recomenda **não expor à internet** até cumprir esses
 O PostgreSQL isolado usa `.local/postgres-data` e a conexão/segredos estão em `.env.local`; nenhum segredo aparece neste documento. O cluster do PostgreSQL do Windows existente não foi alterado. A prévia permanece em `http://127.0.0.1:3000`; entre em `/entrar` para criar uma conta local e testar a gravação. Para conferir instalação em iPhone, primeiro será necessário um endereço HTTPS hospedado.
 
 **Git:** branch `main`, remoto `origin` (`https://github.com/MateusKraiewski/controle-aluno.git`). O commit desta entrega e o resultado do push serão informados na mensagem final.
+
+## Rodada de 20/10/2026 — planner do aluno
+
+Branch local `claude/project-thread-ydzo9o` (sem push). Progresso ponderado atualizado de 38% para 50% em [docs/progress.md](docs/progress.md).
+
+**Implementado e verificado**
+
+- Migration `0008`: estado da aula (`planned`/`cancelled`, motivo e momento) separado da presença; `original_lesson_date` e `is_exception` para ocorrências de série, com unicidade por série/data gerada.
+- Editar, cancelar, reativar e excluir aulas, com escopo **somente esta / esta e as próximas / toda a série**. Escopos de série não tocam ocorrências passadas, já registradas, canceladas ou exceções; só “somente esta” muda a data.
+- Aviso de conflito no servidor ao criar, editar e reativar, com “Salvar mesmo assim” explícito; sobreposições marcadas com ⚠ na semana.
+- Presença recusada em aula cancelada; conteúdo estudado editado à parte do planeado (corrigido o editor que partia do conteúdo planeado).
+- Painel dividido em componentes (`src/components/dashboard/`), botão “Hoje” na semana, textos novos nos quatro idiomas.
+
+| Verificação | Resultado |
+|---|---|
+| `npm run lint`, `npm run lint:typed`, `npm run lint:rules`, `npm run typecheck` | passaram |
+| `npm test` | 7 testes puros passaram (integração ignorada por padrão) |
+| `npm run test:db` | 13 testes passaram, incluindo 6 de integração PostgreSQL: isolamento entre contas (leitura, presença, conteúdo, edição, cancelamento, exclusão), conflitos, escopos de série, cancelamento ≠ falta e exclusão preservando registros |
+| `npm run db:migrate` | `0008` aplicada no cluster local |
+| `npm run build` | passou (Webpack) |
+| Navegador local | cadastro, criação com conflito e confirmação, edição “esta e as próximas”, cancelamento com motivo, conteúdo estudado e exclusão confirmada; sem erros de consola |
+| Revisão de código | 10 achados, todos corrigidos (conflitos em escopo de série, data alterável só em “somente esta”, confirmação de exclusão ao mudar escopo, aulas passadas preservadas, placeholder não gravado, mensagens de erro, conflito ao reativar, testes de BD só locais) |
+| Revisão de segurança | sem vulnerabilidades de alta confiança; todas as queries novas filtram pelo aluno da sessão |
+
+**Continua pendente:** divisão de série/feriados, reposição ligada, timezone de perfil/DST, professor e vínculos, notas privadas, E2E automatizado, deploy HTTPS e validação em iPhone.

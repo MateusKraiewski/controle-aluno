@@ -20,7 +20,7 @@ Skills de React/Next, padrões de autenticação server-side, preferências/loca
 - PostgreSQL 17 isolado: `127.0.0.1:5433`, DB `aula_em_dia`, role `aula_dev`.
 - Cluster: `.local/postgres-data/`; log `.local/postgres.log`; esses dados ficam locais e são excluídos pelo `.gitignore`.
 - Segredos e URL: `.env.local` (não versionado); exemplo em `.env.example`. Não colocar valores no relatório, console, ticket ou variável `NEXT_PUBLIC_*`.
-- As migrations Drizzle `0000`–`0007` foram aplicadas com sucesso ao cluster desta cópia, incluindo proveniência da presença, séries recorrentes e constraints/índices.
+- As migrations Drizzle `0000`–`0008` foram aplicadas com sucesso ao cluster desta cópia, incluindo proveniência da presença, séries recorrentes, estado da aula/exceções e constraints/índices.
 - PostgreSQL do Windows existente não foi alterado; esta aplicação usa porta própria.
 - Desenvolvimento: `npm run dev -- --hostname 127.0.0.1 --port 3000`; URL `http://127.0.0.1:3000`.
 - Conta: `/entrar` → alternar para “Criar conta”; cadastro Better Auth grava no DB local.
@@ -48,7 +48,7 @@ O diretório tem manifesto/metadata PWA, mas localhost só está visível nesta 
 ## Restrições observadas
 
 - Binding SWC nativo Next para Windows retornou “não é aplicativo Win32 válido”; Next executa via WASM. Turbopack build falha nesta plataforma; dev/build foram configurados com Webpack.
-- Há limitações reais no domínio atual: edição/override de série, conflito explícito, vínculo de professor, confirmação bilateral, repositório de notas privadas, reposição, timezone IANA por perfil e upload ainda não foram implementados. Ver `docs/domain-model.md`/`docs/roadmap.md`.
+- Há limitações reais no domínio atual: divisão de série/feriados automáticos, vínculo de professor, confirmação bilateral, repositório de notas privadas, reposição ligada, timezone IANA por perfil e upload ainda não foram implementados. Edição/cancelamento por escopo e aviso de conflito já existem (ver `docs/domain-model.md`).
 - Não afirmar que conta docente, app nativo, backup/restore, deploy público, iPhone físico ou QA e2e estão prontos sem evidência.
 
 ## Evidência e entrega
