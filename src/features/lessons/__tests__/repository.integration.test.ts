@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { closeDatabase, getDb } from "@/db";
 import { lessonSeries, lessons, subjects, user } from "@/db/schema";
 import {
-  cancelLessons, deleteLessons, findConflicts, insertLesson, insertMakeup, insertWeeklySeries, listLessonsForStudent, listScopeTargets,
+  cancelLessons, cancelLessonsInRange, countBreakLessons, deleteLessons, findConflicts, insertLesson, insertMakeup, insertWeeklySeries, listLessonsForStudent, listScopeTargets,
   restoreLesson, setLessonAttendance, setStudiedContent, updateLessons,
 } from "../repository";
 
@@ -129,5 +129,20 @@ describeDb("lessons repository (PostgreSQL)", () => {
     expect(await restoreLesson(alice, original)).toBe("replaced");
     expect(await deleteLessons(alice, original, "this")).toEqual({ deleted: 1 });
     expect((await listLessonsForStudent(alice)).find((row) => row.id === makeupId)?.replacesLessonId).toBeNull();
+  });
+
+  it("cancels only untouched lessons of the student inside a break period", async () => {
+    const inside = await insertLesson(alice, { subject: "Música", topic: "Ritmo", date: "2031-12-22", startsAt: "10:00", endsAt: "11:00" });
+    const recorded = await insertLesson(alice, { subject: "Música", topic: "Ritmo", date: "2031-12-23", startsAt: "10:00", endsAt: "11:00" });
+    const outside = await insertLesson(alice, { subject: "Música", topic: "Ritmo", date: "2032-01-05", startsAt: "10:00", endsAt: "11:00" });
+    const other = await insertLesson(bob, { subject: "Música", topic: "Ritmo", date: "2031-12-22", startsAt: "10:00", endsAt: "11:00" });
+    await setLessonAttendance(alice, recorded, "attended", null);
+    expect(await countBreakLessons(alice, "2031-12-20", "2032-01-02")).toBe(1);
+    expect(await cancelLessonsInRange(alice, "2031-12-20", "2032-01-02", "Férias")).toBe(1);
+    const rows = await listLessonsForStudent(alice);
+    expect(rows.find((row) => row.id === inside)).toMatchObject({ status: "cancelled", cancellationReason: "Férias", attendance: "unrecorded" });
+    expect(rows.find((row) => row.id === recorded)?.status).toBe("planned");
+    expect(rows.find((row) => row.id === outside)?.status).toBe("planned");
+    expect((await listLessonsForStudent(bob)).find((row) => row.id === other)?.status).toBe("planned");
   });
 });

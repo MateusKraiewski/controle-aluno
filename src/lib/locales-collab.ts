@@ -52,6 +52,17 @@ const table: Record<string, [string, string, string]> = {
   "Escolha pelo menos uma matéria para compartilhar.": ["Escolha pelo menos uma disciplina para partilhar.", "Choose at least one subject to share.", "Elige al menos una asignatura para compartir."],
   "Esta aula já tem uma reposição. Exclua a reposição antes de reativar a original.": ["Esta aula já tem uma reposição. Elimine a reposição antes de reativar a original.", "This lesson already has a make-up. Delete the make-up before restoring the original.", "Esta clase ya tiene una recuperación. Elimina la recuperación antes de reactivar la original."],
   "Muitas tentativas. Aguarde alguns minutos e tente novamente.": ["Demasiadas tentativas. Aguarde alguns minutos e tente novamente.", "Too many attempts. Wait a few minutes and try again.", "Demasiados intentos. Espera unos minutos y vuelve a intentarlo."],
+  "Feriados e pausas": ["Feriados e pausas","Holidays and breaks","Festivos y pausas"],
+  "Cancela as aulas do período que ainda não têm registro. Aulas com presença ou falta registrada não mudam.": ["Cancela as aulas do período que ainda não têm registo. Aulas com presença ou falta registada não mudam.","Cancels lessons in the period that have no record yet. Lessons with recorded attendance or absence stay as they are.","Cancela las clases del periodo que aún no tienen registro. Las clases con asistencia o ausencia registrada no cambian."],
+  "Motivo": ["Motivo","Reason","Motivo"],
+  "Ex.: Férias de inverno": ["Ex.: Férias de Natal","e.g. Winter break","Ej.: Vacaciones de invierno"],
+  "1 aula será cancelada.": ["1 aula será cancelada.","1 lesson will be cancelled.","Se cancelará 1 clase."],
+  "aulas serão canceladas.": ["aulas serão canceladas.","lessons will be cancelled.","clases se cancelarán."],
+  "Ver aulas afetadas": ["Ver aulas afetadas","See affected lessons","Ver clases afectadas"],
+  "Confirmar período": ["Confirmar período","Confirm period","Confirmar periodo"],
+  "Período registrado. As aulas ficam canceladas, não como faltas.": ["Período registado. As aulas ficam canceladas, não como faltas.","Period saved. The lessons are cancelled, not counted as absences.","Periodo registrado. Las clases quedan canceladas, no como ausencias."],
+  "A data final precisa ser igual ou depois da inicial.": ["A data final tem de ser igual ou posterior à inicial.","The end date must be on or after the start date.","La fecha final debe ser igual o posterior a la inicial."],
+  "Escolha um período de até um ano.": ["Escolha um período de até um ano.","Choose a period of up to one year.","Elige un periodo de hasta un año."],
   "Vínculo não encontrado.": ["Ligação não encontrada.", "Link not found.", "Vínculo no encontrado."],
 };
 

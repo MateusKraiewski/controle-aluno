@@ -45,10 +45,10 @@ export function MakeupSection({ lesson, persisted, locale, onLocalChange, onDone
   return <form className="makeup-form" onSubmit={(event: FormEvent<HTMLFormElement>) => { event.preventDefault(); void submit(false); }}>
     <strong>{t("Repor esta aula")}</strong>
     <small>{t("Uma aula ainda sem registro fica cancelada com o motivo; uma falta já registrada é mantida.")}</small>
-    <div className="form-row"><label>{t("Nova data")}<input type="date" required value={slot.date} onChange={(event) => setSlot({ ...slot, date: event.target.value })} /></label>
-      <label>{t("Início")}<input type="time" required value={slot.startsAt} onChange={(event) => setSlot({ ...slot, startsAt: event.target.value })} /></label>
-      <label>{t("Fim")}<input type="time" required value={slot.endsAt} onChange={(event) => setSlot({ ...slot, endsAt: event.target.value })} /></label></div>
-    <label>{t("Motivo (opcional)")}<input value={slot.reason} maxLength={300} onChange={(event) => setSlot({ ...slot, reason: event.target.value })} /></label>
+    <div className="form-row"><label>{t("Nova data")}<input type="date" required value={slot.date} onChange={(event) => setSlot((current) => ({ ...current, date: event.target.value }))} /></label>
+      <label>{t("Início")}<input type="time" required value={slot.startsAt} onChange={(event) => setSlot((current) => ({ ...current, startsAt: event.target.value }))} /></label>
+      <label>{t("Fim")}<input type="time" required value={slot.endsAt} onChange={(event) => setSlot((current) => ({ ...current, endsAt: event.target.value }))} /></label></div>
+    <label>{t("Motivo (opcional)")}<input value={slot.reason} maxLength={300} onChange={(event) => setSlot((current) => ({ ...current, reason: event.target.value }))} /></label>
     {error ? <p className="form-error" role="alert">{error}</p> : null}
     {conflicts ? <div className="conflict-box" role="alert"><strong>{t("Horário sobreposto")}</strong><ul>{conflicts.map((item) => <li key={item.id}>{item.subject} · {formatDate(item.date, { weekday: "short", day: "numeric", month: "short" }, locale)} · {item.startsAt}–{item.endsAt}</li>)}</ul>
       <button type="button" className="primary-button" disabled={busy} onClick={() => { void submit(true); }}>{t("Repor mesmo assim")}</button></div> : null}

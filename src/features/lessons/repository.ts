@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, eq, gt, gte, inArray, lt, ne, notInArray, type SQL } from "drizzle-orm";
+import { and, asc, eq, gt, gte, inArray, lt, lte, ne, notInArray, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
 import { lessonSeries, lessons, subjects } from "@/db/schema";
 
@@ -231,4 +231,23 @@ export async function setStudiedContent(studentId: string, lessonId: string, stu
   const rows = await getDb().update(lessons).set({ studiedContent, updatedAt: new Date() })
     .where(and(eq(lessons.id, lessonId), eq(lessons.studentId, studentId))).returning({ id: lessons.id });
   return rows.length > 0;
+}
+
+function breakFilter(studentId: string, from: string, to: string) {
+  // Only lessons nothing was recorded on; attended, absent or already cancelled ones keep their record.
+  return and(eq(lessons.studentId, studentId), gte(lessons.lessonDate, from), lte(lessons.lessonDate, to),
+    eq(lessons.status, "planned"), eq(lessons.attendance, "unrecorded"))!;
+}
+
+export async function countBreakLessons(studentId: string, from: string, to: string) {
+  const [row] = await getDb().select({ total: sql<number>`count(*)::int` }).from(lessons).where(breakFilter(studentId, from, to));
+  return row?.total ?? 0;
+}
+
+/** Holidays and breaks: cancels every untouched lesson in [from, to]; a cancellation is never an absence. */
+export async function cancelLessonsInRange(studentId: string, from: string, to: string, reason: string) {
+  const now = new Date();
+  const rows = await getDb().update(lessons).set({ status: "cancelled", cancellationReason: reason, cancelledAt: now, updatedAt: now })
+    .where(breakFilter(studentId, from, to)).returning({ id: lessons.id });
+  return rows.length;
 }

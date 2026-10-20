@@ -6,7 +6,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { generateWeeklyDates } from "@/features/calendar/domain";
 import {
-  cancelLessons, deleteLessons, findConflicts, getLessonSlot, insertLesson, insertMakeup, insertWeeklySeries, listScopeTargets, restoreLesson,
+  cancelLessons, cancelLessonsInRange, countBreakLessons, deleteLessons, findConflicts, getLessonSlot, insertLesson, insertMakeup, insertWeeklySeries, listScopeTargets, restoreLesson,
   setLessonAttendance, setStudiedContent, updateLessons,
 } from "@/features/lessons/repository";
 
@@ -219,4 +219,26 @@ export async function updateStudyRecord(lessonId: string, content: unknown) {
     if (!await setStudiedContent(studentId, id.data, studiedContent.data || null)) return { ok: false as const, error: "Aula não encontrada." };
     return { ok: true as const };
   } catch { return { ok: false as const, error: "Não foi possível salvar o conteúdo. Tente novamente." }; }
+}
+
+const breakInput = z.object({
+  from: z.iso.date(),
+  to: z.iso.date(),
+  reason: z.string().trim().min(1).max(300),
+}).refine((value) => value.to >= value.from, { path: ["to"], message: "A data final precisa ser igual ou depois da inicial." })
+  .refine((value) => Date.parse(value.to) - Date.parse(value.from) <= 366 * 24 * 60 * 60 * 1000, { path: ["to"], message: "Escolha um período de até um ano." });
+
+/** Without `confirm`, only counts what a holiday/break would cancel so the student sees the impact first. */
+export async function scheduleBreak(input: unknown, confirm = false) {
+  const studentId = await currentUserId();
+  if (!studentId) return { ok: false as const, error: "Entre na sua conta para registrar feriados." };
+  const parsed = breakInput.safeParse(input);
+  if (!parsed.success) return { ok: false as const, error: parsed.error.issues[0]?.message ?? "Confira o período." };
+  const { from, to, reason } = parsed.data;
+  try {
+    if (confirm !== true) return { ok: true as const, preview: true as const, count: await countBreakLessons(studentId, from, to) };
+    const cancelled = await cancelLessonsInRange(studentId, from, to, reason);
+    refresh();
+    return { ok: true as const, preview: false as const, count: cancelled };
+  } catch { return { ok: false as const, error: "Não foi possível registrar o período. Tente novamente." }; }
 }
