@@ -1,4 +1,5 @@
 import { lessonMessages } from "./locales-lessons";
+import { translateCollab } from "./locales-collab";
 
 export type Locale = "pt-BR" | "pt-PT" | "en" | "es";
 
@@ -104,5 +105,5 @@ export const localeOptions: { value: Locale; label: string }[] = [
 ];
 
 export function translate(locale: Locale, text: string) {
-  return messages[locale][text] ?? lessonMessages[locale][text] ?? text;
+  return messages[locale][text] ?? lessonMessages[locale][text] ?? translateCollab(locale, text) ?? text;
 }

@@ -5,6 +5,8 @@ import { updateStudyRecord } from "@/app/actions/lessons";
 import { translate, type Locale } from "@/lib/locales";
 import { formatDate, lessonSummary, statusLabels, type AttendanceStatus, type Lesson, type Status } from "./lesson-model";
 
+const teacherAttendanceLabels = { present: "Compareceu", absent: "Não compareceu", excused: "Falta justificada" } as const;
+
 export function StatusPill({ status, locale }: { status: Status; locale: Locale }) {
   return <span className={`status-pill status-${status}`}><span className="status-dot" />{translate(locale, statusLabels[status])}</span>;
 }
@@ -32,6 +34,7 @@ export function LessonRow({ lesson, editable, locale, persisted = false, onChang
       {editable && lesson.studiedContent ? <p className="studied-line"><span>{t("Estudado:")}</span> {lesson.studiedContent}</p> : null}
       {lesson.replaces ? <p className="studied-line link-line"><span>{t("Reposição da aula de")}</span> {formatDate(lesson.replaces.date, { day: "numeric", month: "short" }, locale)}</p> : null}
       {lesson.replacedBy ? <p className="studied-line link-line"><span>{t("Reposta em")}</span> {formatDate(lesson.replacedBy.date, { day: "numeric", month: "short" }, locale)}</p> : null}
+      {lesson.teacherRecords.map((record) => <p className="studied-line" key={record.teacherName}><span>{record.teacherName} {t("registrou:")}</span> {t(teacherAttendanceLabels[record.attendance])}{lesson.status === "teacher-absent" && record.attendance === "present" ? <span className="exception-tag">{t("Registros diferentes")}</span> : null}</p>)}
       {cancelled && lesson.cancellationReason ? <p className="studied-line"><span>{t("Motivo:")}</span> {lesson.cancellationReason}</p> : null}
       <span className="lesson-meta">{formatDate(lesson.date, { weekday: "short", day: "numeric", month: "short" }, locale)} · {lesson.time}–{lesson.endTime} · {lesson.teacher}</span></div>
     {editable && !cancelled ? <label className="status-select"><span className="sr-only">{t("Situação de")} {lesson.subject}</span><select value={lesson.status} aria-label={`${t("Registrar situação de")} ${lesson.subject}`} onChange={(event) => onChange?.(event.target.value as AttendanceStatus)}>

@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import StudentDashboard, { type DashboardLesson } from "@/components/student-dashboard";
 import { auth } from "@/lib/auth";
 import { listLessonsForStudent } from "@/features/lessons/repository";
+import { listTeacherRecordsForStudent } from "@/features/collaboration/repository";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,7 @@ export default async function Home() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return <StudentDashboard key="demo" />;
 
-  const rows = await listLessonsForStudent(session.user.id);
+  const [rows, teacherRecords] = await Promise.all([listLessonsForStudent(session.user.id), listTeacherRecordsForStudent(session.user.id)]);
 
   const byId = new Map(rows.map((row) => [row.id, row]));
   const replacedBy = new Map(rows.filter((row) => row.replacesLessonId).map((row) => [row.replacesLessonId!, { id: row.id, date: row.date }]));
@@ -29,6 +30,7 @@ export default async function Home() {
     cancellationReason: row.cancellationReason,
     replaces: row.replacesLessonId && byId.has(row.replacesLessonId) ? { id: row.replacesLessonId, date: byId.get(row.replacesLessonId)!.date } : null,
     replacedBy: replacedBy.get(row.id) ?? null,
+    teacherRecords: teacherRecords.filter((record) => record.lessonId === row.id).map((record) => ({ teacherName: record.teacherName, attendance: record.attendance })),
   }));
 
   return <StudentDashboard key={session.user.id} initialLessons={initialLessons} persisted displayName={session.user.name} />;

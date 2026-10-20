@@ -3,7 +3,10 @@ import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { getDatabaseUrl } from "@/lib/env";
 import { logger } from "@/lib/logger";
-import * as schema from "./schema";
+import * as baseSchema from "./schema";
+import * as collaborationSchema from "./schema/collaboration";
+
+const schema = { ...baseSchema, ...collaborationSchema };
 
 const globals = globalThis as typeof globalThis & { __appPostgresPool?: Pool };
 let cached: { client: Pool; db: NodePgDatabase<typeof schema> } | undefined;
