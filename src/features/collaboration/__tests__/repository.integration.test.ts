@@ -58,6 +58,10 @@ describeDb("teacher links (PostgreSQL)", () => {
     expect(await acceptInvite(student, token, [strangerPiano.id])).toBeNull();
     expect(await acceptInvite(student, token, [piano.id])).toBe(linkId);
     expect(await acceptInvite(stranger, token, [strangerPiano.id])).toBeNull();
+    const second = newCode();
+    await createInvite(teacher, second, inWeek);
+    expect(await acceptInvite(student, second, [piano.id])).toBe(linkId);
+    expect((await listTeacherLinks(teacher)).filter((link) => link.status === "accepted")).toHaveLength(1);
     expect(await previewInvite(stranger, token)).toBeNull();
 
     const visible = await listTeacherLessons(teacher, ...range);
@@ -72,7 +76,7 @@ describeDb("teacher links (PostgreSQL)", () => {
     expect(await setTeacherAttendance(stranger, shared, "present", null)).toBe("not_found");
     expect(await setTeacherAttendance(teacher, shared, "present", null)).toBe("saved");
     expect(await setTeacherAttendance(teacher, shared, "excused", "Avisou")).toBe("saved");
-    expect(await listTeacherRecordsForStudent(student)).toEqual([expect.objectContaining({ lessonId: shared, attendance: "excused", note: "Avisou" })]);
+    expect(await listTeacherRecordsForStudent(student)).toEqual([{ lessonId: shared, teacherName: teacher.slice(0, 13), attendance: "excused" }]);
     const [studentRow] = await getDb().select({ attendance: lessons.attendance }).from(lessons).where(eq(lessons.id, shared));
     expect(studentRow?.attendance).toBe("unrecorded");
 

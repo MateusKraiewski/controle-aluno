@@ -26,6 +26,7 @@ export const teacherLinks = pgTable(
   },
   (table) => [
     uniqueIndex("teacher_links_token_hash_unique").on(table.tokenHash),
+    uniqueIndex("teacher_links_one_accepted_per_pair").on(table.teacherId, table.studentId).where(sql`${table.status} = 'accepted'`),
     index("teacher_links_teacher_idx").on(table.teacherId, table.status),
     index("teacher_links_student_idx").on(table.studentId, table.status),
     unique("teacher_links_id_student_unique").on(table.id, table.studentId),

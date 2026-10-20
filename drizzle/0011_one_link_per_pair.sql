@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "teacher_links_one_accepted_per_pair" ON "teacher_links" USING btree ("teacher_id","student_id") WHERE "teacher_links"."status" = 'accepted';

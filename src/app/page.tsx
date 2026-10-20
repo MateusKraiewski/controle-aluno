@@ -13,6 +13,8 @@ export default async function Home() {
   const [rows, teacherRecords] = await Promise.all([listLessonsForStudent(session.user.id), listTeacherRecordsForStudent(session.user.id)]);
 
   const byId = new Map(rows.map((row) => [row.id, row]));
+  const recordsByLesson = new Map<string, DashboardLesson["teacherRecords"]>();
+  for (const record of teacherRecords) recordsByLesson.set(record.lessonId, [...(recordsByLesson.get(record.lessonId) ?? []), { teacherName: record.teacherName, attendance: record.attendance }]);
   const replacedBy = new Map(rows.filter((row) => row.replacesLessonId).map((row) => [row.replacesLessonId!, { id: row.id, date: row.date }]));
   const initialLessons: DashboardLesson[] = rows.map((row) => ({
     id: row.id,
@@ -30,7 +32,7 @@ export default async function Home() {
     cancellationReason: row.cancellationReason,
     replaces: row.replacesLessonId && byId.has(row.replacesLessonId) ? { id: row.replacesLessonId, date: byId.get(row.replacesLessonId)!.date } : null,
     replacedBy: replacedBy.get(row.id) ?? null,
-    teacherRecords: teacherRecords.filter((record) => record.lessonId === row.id).map((record) => ({ teacherName: record.teacherName, attendance: record.attendance })),
+    teacherRecords: recordsByLesson.get(row.id) ?? [],
   }));
 
   return <StudentDashboard key={session.user.id} initialLessons={initialLessons} persisted displayName={session.user.name} />;

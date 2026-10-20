@@ -57,6 +57,15 @@ export async function acceptInvite(studentId: string, tokenHash: string, subject
     if (!link || link.teacherId === studentId) return null;
     const owned = await tx.select({ id: subjects.id }).from(subjects).where(and(eq(subjects.studentId, studentId), inArray(subjects.id, subjectIds)));
     if (owned.length !== subjectIds.length) return null;
+    // One accepted link per teacher and student: a second code only widens the existing scope.
+    const [existing] = await tx.select({ id: teacherLinks.id }).from(teacherLinks)
+      .where(and(eq(teacherLinks.teacherId, link.teacherId), eq(teacherLinks.studentId, studentId), eq(teacherLinks.status, "accepted"))).limit(1).for("update");
+    if (existing) {
+      await tx.update(teacherLinks).set({ status: "revoked", studentId, revokedAt: new Date(), revokedBy: studentId }).where(eq(teacherLinks.id, link.id));
+      await tx.insert(teacherLinkSubjects).values(subjectIds.map((subjectId) => ({ linkId: existing.id, studentId, subjectId }))).onConflictDoNothing();
+      await tx.insert(auditEvents).values({ actorId: studentId, action: "invite_merged", linkId: existing.id });
+      return existing.id;
+    }
     await tx.update(teacherLinks).set({ status: "accepted", studentId, acceptedAt: new Date() }).where(eq(teacherLinks.id, link.id));
     await tx.insert(teacherLinkSubjects).values(subjectIds.map((subjectId) => ({ linkId: link.id, studentId, subjectId })));
     await tx.insert(auditEvents).values({ actorId: studentId, action: "invite_accepted", linkId: link.id });
@@ -83,10 +92,10 @@ function teacherScope(teacherId: string) {
 
 export async function listTeacherLessons(teacherId: string, from: string, to: string) {
   return getDb().select({
-    id: lessons.id, linkId: teacherLinks.id, studentName: studentUser.name, subject: subjects.name, date: lessons.lessonDate,
+    id: lessons.id, studentName: studentUser.name, subject: subjects.name, date: lessons.lessonDate,
     startsAt: lessons.startsAt, endsAt: lessons.endsAt, plannedContent: lessons.plannedContent, status: lessons.status,
     cancellationReason: lessons.cancellationReason, studentAttendance: lessons.attendance,
-    teacherAttendance: participantRecords.attendance, teacherNote: participantRecords.note,
+    teacherAttendance: participantRecords.attendance,
   }).from(lessons)
     .innerJoin(teacherLinkSubjects, and(eq(teacherLinkSubjects.subjectId, lessons.subjectId), eq(teacherLinkSubjects.studentId, lessons.studentId)))
     .innerJoin(teacherLinks, and(eq(teacherLinks.id, teacherLinkSubjects.linkId), eq(teacherLinks.studentId, lessons.studentId)))
@@ -118,9 +127,9 @@ export async function setTeacherAttendance(teacherId: string, lessonId: string, 
 
 /** Teacher reports about the student's own lessons, shown beside the student's record. */
 export async function listTeacherRecordsForStudent(studentId: string) {
-  return getDb().select({ lessonId: participantRecords.lessonId, teacherName: teacherUser.name, attendance: participantRecords.attendance, note: participantRecords.note, recordedAt: participantRecords.recordedAt })
+  return getDb().select({ lessonId: participantRecords.lessonId, teacherName: teacherUser.name, attendance: participantRecords.attendance })
     .from(participantRecords).innerJoin(lessons, eq(lessons.id, participantRecords.lessonId)).innerJoin(teacherUser, eq(teacherUser.id, participantRecords.authorId))
-    .where(eq(lessons.studentId, studentId)).limit(2000);
+    .where(eq(lessons.studentId, studentId)).orderBy(asc(lessons.lessonDate)).limit(2000);
 }
 
 export async function listOwnSubjects(studentId: string) {

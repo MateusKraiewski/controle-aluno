@@ -2,18 +2,18 @@
 
 Atualizado em 20/10/2026. O percentual mede o avanço dos marcos planeados para o produto, com pesos de escopo. Não significa que o produto esteja pronto para produção.
 
-**Progresso ponderado: 50%.** Fórmula: soma de (peso da etapa × conclusão estimada da etapa).
+**Progresso ponderado: 63%.** Fórmula: soma de (peso da etapa × conclusão estimada da etapa).
 
-[████████████████████](#product-and-architecture-20) [██████████████████████████░░░░░░░░░░░░░░](#student-planner-40) [░░░░░░░░░░░░░░░░░░░░](#teacher-collaboration-20) [░░░░░░░░░░](#learning-support-10) [████░░░░░░](#quality-and-release-10)
+[████████████████████](#product-and-architecture-20) [█████████████████████████████░░░░░░░░░░░](#student-planner-40) [███████████░░░░░░░░░](#teacher-collaboration-20) [░░░░░░░░░░](#learning-support-10) [████░░░░░░](#quality-and-release-10)
 
 | Etapa | Peso | Conclusão | Contribuição |
 |---|---:|---:|---:|
 | Product and architecture | 20% | 100% | 20 p.p. |
-| Student planner | 40% | 65% | 26 p.p. |
-| Teacher collaboration | 20% | 0% | 0 p.p. |
+| Student planner | 40% | 72% | 28,8 p.p. |
+| Teacher collaboration | 20% | 55% | 11 p.p. |
 | Learning support | 10% | 0% | 0 p.p. |
 | Quality and release | 10% | 35% | 3,5 p.p. |
-| **Total** | **100%** |  | **49,5% → 50%** |
+| **Total** | **100%** |  | **63,3% → 63%** |
 
 ## Product and architecture (20%)
 
@@ -23,13 +23,15 @@ Atualizado em 20/10/2026. O percentual mede o avanço dos marcos planeados para 
 
 ## Student planner (40%)
 
-**Parcial (65%).** Há autenticação, dados de aula persistidos por utilizador, criação de séries semanais/quinzenais, registo de presença e conteúdo estudado separado do planeado, edição/cancelamento/reativação/exclusão de aulas com escopo (somente esta, esta e as próximas, toda a série), exceções de série, estado “cancelada” distinto de falta e aviso de conflito com confirmação explícita.
+**Parcial (72%).** Há autenticação, dados de aula persistidos por utilizador, criação de séries semanais/quinzenais, registo de presença e conteúdo estudado separado do planeado, edição/cancelamento/reativação/exclusão de aulas com escopo (somente esta, esta e as próximas, toda a série), exceções de série, estado “cancelada” distinto de falta e aviso de conflito com confirmação explícita e reposição ligada à aula original.
 
-**Falta:** dividir série em duas regras, feriados automáticos e “restaurar padrão” de exceção; reposição ligada à aula original; timezone de perfil e política de DST; notas privadas, tarefas/materiais e exportação.
+**Falta:** dividir série em duas regras, feriados automáticos e “restaurar padrão” de exceção; timezone de perfil e política de DST; notas privadas, tarefas/materiais e exportação.
 
 ## Teacher collaboration (20%)
 
-**Por iniciar.** O produto prevê vínculo consentido e autoria separada, mas ainda não há fluxo utilizável de professor, convite, confirmação de presença bilateral ou área de acompanhamento.
+**Parcial (55%).** Convite por código de uso único (hash, 7 dias), aceite com escolha de matérias, revogação por qualquer parte, área do professor com as aulas consentidas, relato de presença do próprio professor, visão desse relato pelo aluno com marca de divergência e auditoria dos eventos do vínculo. Coberto por testes de integração de autorização (IDOR, código expirado/reutilizado/próprio, revogação).
+
+**Falta:** resolução formal de divergência com revisões, disponibilidade/agenda própria do professor e conflito entre alunos, notificações, rate limiting dos convites, perfil/papel docente explícito e aulas em grupo.
 
 ## Learning support (10%)
 

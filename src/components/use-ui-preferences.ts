@@ -14,6 +14,7 @@ export function useUiPreferences() {
     document.documentElement.lang = locale;
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#171d19" : "#243d34");
   }, [locale, theme]);
   return { locale, theme, t: (text: string) => translate(locale, text) };
 }

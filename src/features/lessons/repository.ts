@@ -147,16 +147,22 @@ export async function cancelLessons(studentId: string, lessonId: string, reason:
 }
 
 export async function getLessonSlot(studentId: string, lessonId: string) {
-  const [lesson] = await getDb().select({ id: lessons.id, date: lessons.lessonDate, startsAt: lessons.startsAt, endsAt: lessons.endsAt, status: lessons.status })
+  const [lesson] = await getDb().select({ id: lessons.id, date: lessons.lessonDate, startsAt: lessons.startsAt, endsAt: lessons.endsAt, status: lessons.status, attendance: lessons.attendance })
     .from(lessons).where(and(eq(lessons.id, lessonId), eq(lessons.studentId, studentId))).limit(1);
   return lesson ?? null;
 }
 
-export async function restoreLesson(studentId: string, lessonId: string) {
-  const rows = await getDb().update(lessons)
-    .set({ status: "planned", cancellationReason: null, cancelledAt: null, updatedAt: new Date() })
-    .where(and(eq(lessons.id, lessonId), eq(lessons.studentId, studentId), eq(lessons.status, "cancelled"))).returning({ id: lessons.id });
-  return rows.length > 0;
+/** Reactivates a cancelled lesson unless a make-up already replaces it (both would be active). */
+export async function restoreLesson(studentId: string, lessonId: string): Promise<"restored" | "replaced" | "not_found"> {
+  return getDb().transaction(async (tx) => {
+    const [makeup] = await tx.select({ id: lessons.id }).from(lessons)
+      .where(and(eq(lessons.studentId, studentId), eq(lessons.replacesLessonId, lessonId))).limit(1);
+    if (makeup) return "replaced";
+    const rows = await tx.update(lessons)
+      .set({ status: "planned", cancellationReason: null, cancelledAt: null, updatedAt: new Date() })
+      .where(and(eq(lessons.id, lessonId), eq(lessons.studentId, studentId), eq(lessons.status, "cancelled"))).returning({ id: lessons.id });
+    return rows.length > 0 ? "restored" : "not_found";
+  });
 }
 
 export async function deleteLessons(studentId: string, lessonId: string, scope: SeriesScope) {
@@ -164,7 +170,7 @@ export async function deleteLessons(studentId: string, lessonId: string, scope: 
     const target = await lockTarget(tx, studentId, lessonId);
     if (!target) return null;
     const siblings = siblingFilter(studentId, target, scope);
-    const siblingIds = siblings ? (await tx.select({ id: lessons.id }).from(lessons).where(siblings)).map((row) => row.id) : [];
+    const siblingIds = siblings ? (await tx.select({ id: lessons.id }).from(lessons).where(siblings).for("update")).map((row) => row.id) : [];
     const ids = [target.id, ...siblingIds];
     // A make-up lesson outlives the deleted original; only the link is dropped.
     await tx.update(lessons).set({ replacesLessonId: null, updatedAt: new Date() })

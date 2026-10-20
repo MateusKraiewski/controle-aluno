@@ -140,7 +140,9 @@ export async function restoreCancelledLesson(lessonId: string, allowConflicts = 
       const conflict = await conflictFailure(studentId, { dates: [slot.date], startsAt: slot.startsAt.slice(0, 5), endsAt: slot.endsAt.slice(0, 5), excludeIds: [slot.id] });
       if (conflict) return conflict;
     }
-    if (!await restoreLesson(studentId, id.data)) return { ok: false as const, error: "Aula não encontrada." };
+    const restored = await restoreLesson(studentId, id.data);
+    if (restored === "replaced") return { ok: false as const, error: "Esta aula já tem uma reposição. Exclua a reposição antes de reativar a original." };
+    if (restored === "not_found") return { ok: false as const, error: "Aula não encontrada." };
     refresh();
     return { ok: true as const };
   } catch { return { ok: false as const, error: "Não foi possível reativar a aula. Tente novamente." }; }
@@ -177,7 +179,11 @@ export async function scheduleMakeup(lessonId: string, input: unknown) {
   const { allowConflicts, reason, ...slot } = parsed.data;
   try {
     if (!allowConflicts) {
-      const conflict = await conflictFailure(studentId, { ...slot, dates: [slot.date], excludeIds: [id.data] });
+      // The original only leaves the agenda when it will be cancelled (no record of its own yet).
+      const original = await getLessonSlot(studentId, id.data);
+      if (!original) return { ok: false as const, error: "Aula não encontrada." };
+      const freed = original.status === "planned" && original.attendance === "unrecorded";
+      const conflict = await conflictFailure(studentId, { ...slot, dates: [slot.date], excludeIds: freed ? [id.data] : [] });
       if (conflict) return conflict;
     }
     const result = await insertMakeup(studentId, id.data, { ...slot, reason: reason || null });

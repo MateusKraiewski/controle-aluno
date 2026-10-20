@@ -46,7 +46,7 @@ export function TeacherArea({ links, lessons }: { links: TeacherLinkView[]; less
       <p className="history-hint">{t("O código vale 7 dias e só pode ser usado uma vez. Ele aparece apenas agora; envie ao aluno por um canal de confiança.")}</p>
       {code ? <p className="invite-code" aria-live="polite"><span>{t("Código do convite")}</span><strong>{code}</strong></p> : null}
       <button type="button" className="primary-button" disabled={busy} onClick={() => { void invite(); }}>{t("Gerar código de convite")}</button>
-      {pending.length ? <ul className="collab-list">{pending.map((link) => <li key={link.id}><span>{t("Convite pendente")} · {t("expira em")} {formatDate(link.expiresAt.slice(0, 10), { day: "numeric", month: "short" }, locale)}</span>
+      {pending.length ? <ul className="collab-list">{pending.map((link) => <li key={link.id}><span>{t("Convite pendente")} · {t("expira em")} {formatDate(new Date(link.expiresAt), { day: "numeric", month: "short" }, locale)}</span>
         <button type="button" className="text-button" disabled={busy} onClick={() => { void run(() => revokeTeacherLink(link.id), "Convite cancelado."); }}>{t("Cancelar convite")}</button></li>)}</ul> : null}
     </section>
     <section className="panel collab-panel"><h2>{t("Alunos vinculados")}</h2>

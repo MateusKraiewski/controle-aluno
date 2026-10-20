@@ -65,7 +65,7 @@ Separar **estado da aula** (planned/completed/cancelled/rescheduled) de **estado
 
 ## Modelo implementado hoje
 
-`user`, `subjects(student_id, name, color)`, `lesson_series`, `lessons(student_id, subject_id, series_id, original_lesson_date, lesson_date, starts_at, ends_at, status, cancellation_reason, cancelled_at, is_exception, planned/studied_content, attendance, attendance_note, attendance_recorded_by/at)` e tabelas Better Auth; migrations `0000`–`0008`. Há criação de aulas avulsas e séries semanais/quinzenais (até 300 ocorrências, atomicidade, timezone da série) e autoria/hora do estado aluno.
+`user`, `subjects(student_id, name, color)`, `lesson_series`, `lessons(student_id, subject_id, series_id, original_lesson_date, lesson_date, starts_at, ends_at, status, cancellation_reason, cancelled_at, is_exception, planned/studied_content, attendance, attendance_note, attendance_recorded_by/at)` e tabelas Better Auth; migrations `0000`–`0011`. Há criação de aulas avulsas e séries semanais/quinzenais (até 300 ocorrências, atomicidade, timezone da série) e autoria/hora do estado aluno.
 
 **Estado da aula separado da presença (0008):** `status` é `planned` ou `cancelled`; cancelar guarda motivo e momento, nunca altera `attendance` e a aula cancelada não aceita registro de presença. Reativar volta a `planned`.
 
@@ -73,7 +73,11 @@ Separar **estado da aula** (planned/completed/cancelled/rescheduled) de **estado
 
 **Conflitos:** criar, editar e reativar verificam sobreposição `[início, fim)` com aulas `planned` do próprio aluno; o servidor devolve os conflitos e só grava com confirmação explícita (`allowConflicts`).
 
-`attendance_status` atual ainda não contém duas fontes independentes: no modo aluno, “Relatei falta do professor” é apenas auto-declaração do aluno, não confirmação oficial nem dado do professor. Vínculo de professor, relatórios independentes, reposição ligada e notas privadas continuam propostas. Não ampliar autoridade do professor sobre esse enum.
+**Reposição (0009):** `lessons.replaces_lesson_id` liga a reposição à ocorrência original (FK composta com o mesmo aluno, no máximo uma reposição por aula). A original sem registro próprio fica cancelada com o motivo; uma original com falta já registrada mantém o registro. Uma original já reposta não pode ser reativada enquanto a reposição existir; excluir a original apenas desfaz a ligação.
+
+**Vínculo professor ↔ aluno (0010–0011, implementado):** `teacher_links` (`pending/accepted/revoked`, hash SHA-256 do código, validade de 7 dias, uso único, quem revogou), `teacher_link_subjects` (escopo consentido por matéria, FK composta para matérias do próprio aluno), `participant_records` (relato do professor sobre a própria presença: `present/absent/excused`, único por aula e autor) e `audit_events` (ator, ação e vínculo, sem conteúdo escolar). Qualquer conta pode gerar convite em `/professor`; o aluno usa o código em `/vinculos`, vê o nome de quem pede e o que será partilhado, escolhe as matérias e aceita. Há no máximo um vínculo aceito por par; um segundo código só amplia o escopo. Qualquer parte revoga e o acesso termina na mesma transação. O professor vê só as aulas das matérias consentidas (datas, horários, conteúdo previsto, cancelamentos e o relato de presença do aluno; nunca o conteúdo estudado) e só escreve o próprio relato. O aluno vê o relato do professor ao lado do seu e a marca “Registros diferentes” quando relatou ausência do professor e o professor registrou presença.
+
+`attendance_status` do aluno continua a ser o relato do aluno; “Relatei falta do professor” é auto-declaração do aluno, não dado do professor. Pendentes: resolução formal de divergência com nova revisão, notas privadas e objetivos de aprendizagem, rate limiting dos convites e notificações.
 
 ## Evolução de schema sem perda
 

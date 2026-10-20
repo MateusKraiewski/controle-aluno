@@ -46,7 +46,7 @@ describeDb("lessons repository (PostgreSQL)", () => {
     expect(await setStudiedContent(bob, id, "invasão")).toBe(false);
     expect(await updateLessons(bob, id, { subject: "X", topic: "Y", date: "2030-01-08", startsAt: "08:00", endsAt: "09:00" }, "this")).toBeNull();
     expect(await cancelLessons(bob, id, null, "all")).toBeNull();
-    expect(await restoreLesson(bob, id)).toBe(false);
+    expect(await restoreLesson(bob, id)).toBe("not_found");
     expect(await deleteLessons(bob, id, "all")).toBeNull();
     const [row] = await listLessonsForStudent(alice).then((rows) => rows.filter((item) => item.id === id));
     expect(row).toMatchObject({ subject: "Química", status: "planned", attendance: "unrecorded", studiedContent: null, date: "2030-01-07" });
@@ -84,7 +84,7 @@ describeDb("lessons repository (PostgreSQL)", () => {
     expect(rows.map((row) => row.status)).toEqual(["planned", "cancelled", "cancelled"]);
     expect(rows.every((row) => row.attendance === "unrecorded")).toBe(true);
     expect(await setLessonAttendance(alice, created[1]!.id, "student_absent", null)).toBe("cancelled");
-    expect(await restoreLesson(alice, created[1]!.id)).toBe(true);
+    expect(await restoreLesson(alice, created[1]!.id)).toBe("restored");
     expect(await setLessonAttendance(alice, created[1]!.id, "attended", null)).toBe("saved");
   });
 
@@ -126,6 +126,7 @@ describeDb("lessons repository (PostgreSQL)", () => {
     await insertMakeup(alice, absent, { date: "2030-07-10", startsAt: "08:00", endsAt: "09:00", reason: null });
     expect((await listLessonsForStudent(alice)).find((row) => row.id === absent)).toMatchObject({ status: "planned", attendance: "student_absent" });
 
+    expect(await restoreLesson(alice, original)).toBe("replaced");
     expect(await deleteLessons(alice, original, "this")).toEqual({ deleted: 1 });
     expect((await listLessonsForStudent(alice)).find((row) => row.id === makeupId)?.replacesLessonId).toBeNull();
   });

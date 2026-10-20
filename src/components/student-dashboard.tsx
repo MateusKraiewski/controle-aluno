@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { updateAttendance } from "@/app/actions/lessons";
 import { authClient } from "@/lib/auth-client";
 import { localeOptions, type Locale, translate } from "@/lib/locales";
-import { getServerUiPreferencesSnapshot, getUiPreferencesSnapshot, parseUiPreferences, saveUiPreferences, subscribeUiPreferences } from "@/lib/preferences";
+import { saveUiPreferences } from "@/lib/preferences";
+import { useUiPreferences } from "./use-ui-preferences";
 import { LessonDialog } from "./dashboard/lesson-dialog";
 import { demoLessons, formatDate, lessonSummary, localDateKey, statusLabels, toLessons, type AttendanceStatus, type DashboardLesson, type Lesson, type View } from "./dashboard/lesson-model";
 import { LessonRow } from "./dashboard/lesson-row";
@@ -33,11 +34,7 @@ function Navigation({ active, onChange, locale, mobile = false }: { active: View
 
 export default function StudentDashboard({ initialLessons, persisted = false, displayName }: { initialLessons?: DashboardLesson[]; persisted?: boolean; displayName?: string }) {
   const router = useRouter();
-  const preferencesSnapshot = useSyncExternalStore(subscribeUiPreferences, getUiPreferencesSnapshot, getServerUiPreferencesSnapshot);
-  const preferences = parseUiPreferences(preferencesSnapshot);
-  const locale = preferences.locale ?? "pt-BR";
-  const theme = preferences.theme ?? "light";
-  const t = (text: string) => translate(locale, text);
+  const { locale, theme, t } = useUiPreferences();
   const [active, setActive] = useState<View>("overview");
   const [lessons, setLessons] = useState<Lesson[]>(() => initialLessons ? toLessons(initialLessons) : demoLessons());
   // Server actions refresh the page after mutations; adopt the fresh server rows when they arrive.
@@ -50,12 +47,6 @@ export default function StudentDashboard({ initialLessons, persisted = false, di
   const [historySubject, setHistorySubject] = useState("all");
   const [historyFrom, setHistoryFrom] = useState("");
   const [historyTo, setHistoryTo] = useState("");
-  useEffect(() => {
-    document.documentElement.lang = locale;
-    document.documentElement.dataset.theme = theme;
-    document.documentElement.style.colorScheme = theme;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#171d19" : "#243d34");
-  }, [locale, theme]);
   function changeLocale(value: Locale) { saveUiPreferences({ locale: value, theme }); }
   function changeTheme() { saveUiPreferences({ locale, theme: theme === "light" ? "dark" : "light" }); }
   const days = useMemo(() => Array.from({ length: 7 }, (_, index) => { const day = new Date(); day.setHours(0, 0, 0, 0); day.setDate(day.getDate() + weekOffset * 7 + index); return day; }), [weekOffset]);
