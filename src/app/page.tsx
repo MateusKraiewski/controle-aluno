@@ -25,6 +25,8 @@ export default async function Home() {
     endTime: row.endsAt.slice(0, 5),
     plannedContent: row.plannedContent ?? "",
     studiedContent: row.studiedContent,
+    privateNote: row.privateNote,
+    nextStep: row.nextStep,
     teacher: "Professor(a) a definir",
     status: row.status === "cancelled" ? "cancelled" : row.attendance === "attended" ? "attended" : row.attendance === "student_absent" ? "student-absent" : row.attendance === "teacher_absent" ? "teacher-absent" : "upcoming",
     isSeries: row.seriesId !== null,

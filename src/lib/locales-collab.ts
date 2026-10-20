@@ -63,6 +63,15 @@ const table: Record<string, [string, string, string]> = {
   "Período registrado. As aulas ficam canceladas, não como faltas.": ["Período registado. As aulas ficam canceladas, não como faltas.","Period saved. The lessons are cancelled, not counted as absences.","Periodo registrado. Las clases quedan canceladas, no como ausencias."],
   "A data final precisa ser igual ou depois da inicial.": ["A data final tem de ser igual ou posterior à inicial.","The end date must be on or after the start date.","La fecha final debe ser igual o posterior a la inicial."],
   "Escolha um período de até um ano.": ["Escolha um período de até um ano.","Choose a period of up to one year.","Elige un periodo de hasta un año."],
+  "Registro da aula salvo.": ["Registo da aula guardado.","Lesson record saved.","Registro de la clase guardado."],
+  "Próximo passo:": ["Próximo passo:","Next step:","Siguiente paso:"],
+  "Nota privada:": ["Nota privada:","Private note:","Nota privada:"],
+  "Próximo passo ou tarefa": ["Próximo passo ou tarefa","Next step or task","Siguiente paso o tarea"],
+  "Nota privada (só você vê)": ["Nota privada (só você a vê)","Private note (only you see it)","Nota privada (solo tú la ves)"],
+  "Salvar registro": ["Guardar registo","Save record","Guardar registro"],
+  "Editar registro da aula": ["Editar registo da aula","Edit lesson record","Editar registro de la clase"],
+  "Registrar o que foi estudado": ["Registar o que foi estudado","Record what was studied","Registrar lo estudiado"],
+  "Cada campo precisa respeitar o limite de caracteres.": ["Cada campo tem de respeitar o limite de caracteres.","Each field must stay within its character limit.","Cada campo debe respetar el límite de caracteres."],
   "Vínculo não encontrado.": ["Ligação não encontrada.", "Link not found.", "Vínculo no encontrado."],
 };
 

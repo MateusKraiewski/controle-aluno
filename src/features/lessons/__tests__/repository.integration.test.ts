@@ -5,7 +5,7 @@ import { closeDatabase, getDb } from "@/db";
 import { lessonSeries, lessons, subjects, user } from "@/db/schema";
 import {
   cancelLessons, cancelLessonsInRange, countBreakLessons, deleteLessons, findConflicts, insertLesson, insertMakeup, insertWeeklySeries, listLessonsForStudent, listScopeTargets,
-  restoreLesson, setLessonAttendance, setStudiedContent, updateLessons,
+  restoreLesson, setLessonAttendance, setStudyRecord, updateLessons,
 } from "../repository";
 
 // Only `npm run test:db` runs these, and only against a database on this machine: they write rows.
@@ -43,7 +43,7 @@ describeDb("lessons repository (PostgreSQL)", () => {
     const id = await insertLesson(alice, { subject: "Química", topic: "Ligações", date: "2030-01-07", startsAt: "14:00", endsAt: "15:00" });
     expect((await listLessonsForStudent(bob)).map((row) => row.id)).not.toContain(id);
     expect(await setLessonAttendance(bob, id, "attended", null)).toBe("not_found");
-    expect(await setStudiedContent(bob, id, "invasão")).toBe(false);
+    expect(await setStudyRecord(bob, id, { studiedContent: "invasão", privateNote: null, nextStep: null })).toBe(false);
     expect(await updateLessons(bob, id, { subject: "X", topic: "Y", date: "2030-01-08", startsAt: "08:00", endsAt: "09:00" }, "this")).toBeNull();
     expect(await cancelLessons(bob, id, null, "all")).toBeNull();
     expect(await restoreLesson(bob, id)).toBe("not_found");
@@ -144,5 +144,11 @@ describeDb("lessons repository (PostgreSQL)", () => {
     expect(rows.find((row) => row.id === recorded)?.status).toBe("planned");
     expect(rows.find((row) => row.id === outside)?.status).toBe("planned");
     expect((await listLessonsForStudent(bob)).find((row) => row.id === other)?.status).toBe("planned");
+  });
+
+  it("stores the private note and next step separately from planned and studied content", async () => {
+    const id = await insertLesson(alice, { subject: "Latim", topic: "Declinações", date: "2031-02-03", startsAt: "10:00", endsAt: "11:00" });
+    expect(await setStudyRecord(alice, id, { studiedContent: "1ª declinação", privateNote: "Rever com calma", nextStep: "Exercícios 1–5" })).toBe(true);
+    expect((await listLessonsForStudent(alice)).find((row) => row.id === id)).toMatchObject({ plannedContent: "Declinações", studiedContent: "1ª declinação", privateNote: "Rever com calma", nextStep: "Exercícios 1–5" });
   });
 });

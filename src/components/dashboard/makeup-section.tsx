@@ -30,7 +30,7 @@ export function MakeupSection({ lesson, persisted, locale, onLocalChange, onDone
       const id = `demo-${Date.now()}`;
       onLocalChange((lessons) => [
         ...lessons.map((item) => item.id !== lesson.id ? item : { ...item, replacedBy: { id, date: slot.date }, ...(item.status === "upcoming" ? { status: "cancelled" as const, cancellationReason: slot.reason || null } : {}) }),
-        { ...lesson, id, date: fromDateKey(slot.date, slot.startsAt), time: slot.startsAt, endTime: slot.endsAt, status: "upcoming", studiedContent: null, isSeries: false, isException: false, cancellationReason: null, replaces: { id: lesson.id, date: localDateKey(lesson.date) }, replacedBy: null, teacherRecords: [] },
+        { ...lesson, id, date: fromDateKey(slot.date, slot.startsAt), time: slot.startsAt, endTime: slot.endsAt, status: "upcoming", studiedContent: null, privateNote: null, nextStep: null, isSeries: false, isException: false, cancellationReason: null, replaces: { id: lesson.id, date: localDateKey(lesson.date) }, replacedBy: null, teacherRecords: [] },
       ]);
       onDone(message); return;
     }

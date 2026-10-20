@@ -67,6 +67,8 @@ describeDb("teacher links (PostgreSQL)", () => {
     const visible = await listTeacherLessons(teacher, ...range);
     expect(visible.map((lesson) => lesson.id)).toEqual([shared]);
     expect(visible[0]).not.toHaveProperty("studiedContent");
+    expect(visible[0]).not.toHaveProperty("privateNote");
+    expect(visible[0]).not.toHaveProperty("nextStep");
     expect(await listTeacherLessons(stranger, ...range)).toEqual([]);
     expect((await listStudentLinks(student)).map((link) => link.subjects)).toEqual([["Piano"]]);
     expect((await listTeacherLinks(teacher)).find((link) => link.id === linkId)).toMatchObject({ status: "accepted", subjects: ["Piano"] });

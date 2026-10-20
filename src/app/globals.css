@@ -59,3 +59,4 @@ button.day-event{display:block;width:100%;text-align:left;font:inherit;border-to
 :root[data-theme="dark"] .invite-code{background:#273528;border-color:#465b44}
 .studied-line .exception-tag{margin-left:6px}
 .break-form{margin-top:12px}
+.study-record-form input{height:36px;border:1px solid var(--line);border-radius:9px;padding:0 9px;background:var(--panel);color:var(--ink);font:inherit}

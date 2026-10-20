@@ -4,7 +4,7 @@ export type View = "overview" | "calendar" | "history" | "subjects";
 export type Status = "upcoming" | "attended" | "student-absent" | "teacher-absent" | "cancelled";
 export type DashboardLesson = {
   id: string; subject: string; date: Date | string; time: string; endTime: string;
-  plannedContent: string; studiedContent: string | null; teacher: string; status: Status;
+  plannedContent: string; studiedContent: string | null; privateNote: string | null; nextStep: string | null; teacher: string; status: Status;
   isSeries: boolean; isException: boolean; cancellationReason: string | null;
   /** Make-up links by civil date (YYYY-MM-DD); the history keeps both lessons. */
   replaces: LessonLink | null; replacedBy: LessonLink | null;
@@ -27,7 +27,7 @@ export function dateAt(offset: number, time: string) {
 }
 
 function demoLesson(id: string, subject: string, offset: number, time: string, endTime: string, plannedContent: string, teacher: string, status: Status): Lesson {
-  return { id, subject, date: dateAt(offset, time), time, endTime, plannedContent, studiedContent: null, teacher, status, isSeries: false, isException: false, cancellationReason: null, replaces: null, replacedBy: null, teacherRecords: [] };
+  return { id, subject, date: dateAt(offset, time), time, endTime, plannedContent, studiedContent: null, privateNote: null, nextStep: null, teacher, status, isSeries: false, isException: false, cancellationReason: null, replaces: null, replacedBy: null, teacherRecords: [] };
 }
 
 export function demoLessons(): Lesson[] {

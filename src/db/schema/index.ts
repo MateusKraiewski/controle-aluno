@@ -92,6 +92,9 @@ export const lessons = pgTable(
     endsAt: time("ends_at").notNull(),
     plannedContent: text("planned_content"),
     studiedContent: text("studied_content"),
+    // Visible only to the student; never selected by teacher queries.
+    privateNote: text("private_note"),
+    nextStep: text("next_step"),
     attendance: attendanceStatus("attendance").notNull().default("unrecorded"),
     attendanceNote: text("attendance_note"),
     attendanceRecordedBy: text("attendance_recorded_by").references(() => user.id),

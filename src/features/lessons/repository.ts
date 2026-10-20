@@ -12,7 +12,7 @@ export async function listLessonsForStudent(studentId: string) {
   return getDb().select({
     id: lessons.id, subject: subjects.name, date: lessons.lessonDate, startsAt: lessons.startsAt, endsAt: lessons.endsAt,
     seriesId: lessons.seriesId, isException: lessons.isException, status: lessons.status, cancellationReason: lessons.cancellationReason,
-    plannedContent: lessons.plannedContent, studiedContent: lessons.studiedContent,
+    plannedContent: lessons.plannedContent, studiedContent: lessons.studiedContent, privateNote: lessons.privateNote, nextStep: lessons.nextStep,
     attendance: lessons.attendance, attendanceNote: lessons.attendanceNote, replacesLessonId: lessons.replacesLessonId,
   }).from(lessons).innerJoin(subjects, and(eq(lessons.subjectId, subjects.id), eq(lessons.studentId, subjects.studentId)))
     .where(eq(lessons.studentId, studentId)).orderBy(asc(lessons.lessonDate), asc(lessons.startsAt));
@@ -227,8 +227,11 @@ export async function setLessonAttendance(studentId: string, lessonId: string, a
   return lesson ? "cancelled" : "not_found";
 }
 
-export async function setStudiedContent(studentId: string, lessonId: string, studiedContent: string | null) {
-  const rows = await getDb().update(lessons).set({ studiedContent, updatedAt: new Date() })
+export type StudyRecord = { studiedContent: string | null; privateNote: string | null; nextStep: string | null };
+
+/** The student's own post-lesson record: what was studied, a private note and the next step. */
+export async function setStudyRecord(studentId: string, lessonId: string, record: StudyRecord) {
+  const rows = await getDb().update(lessons).set({ ...record, updatedAt: new Date() })
     .where(and(eq(lessons.id, lessonId), eq(lessons.studentId, studentId))).returning({ id: lessons.id });
   return rows.length > 0;
 }

@@ -7,7 +7,7 @@ import { auth } from "@/lib/auth";
 import { generateWeeklyDates } from "@/features/calendar/domain";
 import {
   cancelLessons, cancelLessonsInRange, countBreakLessons, deleteLessons, findConflicts, getLessonSlot, insertLesson, insertMakeup, insertWeeklySeries, listScopeTargets, restoreLesson,
-  setLessonAttendance, setStudiedContent, updateLessons,
+  setLessonAttendance, setStudyRecord, updateLessons,
 } from "@/features/lessons/repository";
 
 const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
@@ -209,14 +209,17 @@ export async function updateAttendance(lessonId: string, status: unknown, note?:
   } catch { return { ok: false as const, error: "Não foi possível atualizar a presença. Tente novamente." }; }
 }
 
-export async function updateStudyRecord(lessonId: string, content: unknown) {
+const optionalText = (max: number) => z.string().trim().max(max).transform((value) => value || null);
+const studyRecordInput = z.object({ studiedContent: optionalText(2000), privateNote: optionalText(2000), nextStep: optionalText(500) });
+
+export async function updateStudyRecord(lessonId: string, record: unknown) {
   const studentId = await currentUserId();
   if (!studentId) return { ok: false as const, error: "Entre na sua conta para editar o histórico." };
   const id = z.uuid().safeParse(lessonId);
-  const studiedContent = z.string().trim().max(2000).safeParse(content);
-  if (!id.success || !studiedContent.success) return { ok: false as const, error: "O conteúdo precisa ter até 2.000 caracteres." };
+  const parsed = studyRecordInput.safeParse(record);
+  if (!id.success || !parsed.success) return { ok: false as const, error: "Cada campo precisa respeitar o limite de caracteres." };
   try {
-    if (!await setStudiedContent(studentId, id.data, studiedContent.data || null)) return { ok: false as const, error: "Aula não encontrada." };
+    if (!await setStudyRecord(studentId, id.data, parsed.data)) return { ok: false as const, error: "Aula não encontrada." };
     return { ok: true as const };
   } catch { return { ok: false as const, error: "Não foi possível salvar o conteúdo. Tente novamente." }; }
 }

@@ -13,25 +13,31 @@ export function StatusPill({ status, locale }: { status: Status; locale: Locale 
 
 type LessonRowProps = {
   lesson: Lesson; locale: Locale; editable?: boolean; persisted?: boolean;
-  onChange?: (value: AttendanceStatus) => void; onStudiedChange?: (value: string | null) => void; onOpen?: () => void;
+  onChange?: (value: AttendanceStatus) => void; onRecordChange?: (value: StudyRecord) => void; onOpen?: () => void;
 };
 
-export function LessonRow({ lesson, editable, locale, persisted = false, onChange, onStudiedChange, onOpen }: LessonRowProps) {
+type StudyRecord = Pick<Lesson, "studiedContent" | "privateNote" | "nextStep">;
+const recordDraft = (lesson: Lesson) => ({ studiedContent: lesson.studiedContent ?? "", privateNote: lesson.privateNote ?? "", nextStep: lesson.nextStep ?? "" });
+
+export function LessonRow({ lesson, editable, locale, persisted = false, onChange, onRecordChange, onOpen }: LessonRowProps) {
   const t = (text: string) => translate(locale, text);
   const [editingContent, setEditingContent] = useState(false);
-  const [content, setContent] = useState(lesson.studiedContent ?? "");
+  const [draft, setDraft] = useState(() => recordDraft(lesson));
   const [contentNotice, setContentNotice] = useState("");
   const cancelled = lesson.status === "cancelled";
   async function saveContent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const result = await updateStudyRecord(lesson.id, content);
+    const result = await updateStudyRecord(lesson.id, draft);
     if (!result.ok) { setContentNotice(t(result.error)); return; }
-    onStudiedChange?.(content.trim() || null); setContentNotice(t("Conteúdo estudado salvo.")); setEditingContent(false);
+    onRecordChange?.({ studiedContent: draft.studiedContent.trim() || null, privateNote: draft.privateNote.trim() || null, nextStep: draft.nextStep.trim() || null });
+    setContentNotice(t("Registro da aula salvo.")); setEditingContent(false);
   }
   return <article className={`lesson-row ${cancelled ? "is-cancelled" : ""}`}><span className={`subject-mark mark-${lesson.subject.toLowerCase()}`} aria-hidden="true">{lesson.subject.slice(0, 1)}</span>
     <div className="lesson-main"><div className="lesson-title-line"><strong>{lesson.subject}</strong><StatusPill status={lesson.status} locale={locale} />{lesson.isException ? <span className="exception-tag">{t("alteração nesta data")}</span> : null}</div>
       <p>{(editable ? lesson.plannedContent : lessonSummary(lesson)) || t("Aula sem conteúdo registrado")}</p>
       {editable && lesson.studiedContent ? <p className="studied-line"><span>{t("Estudado:")}</span> {lesson.studiedContent}</p> : null}
+      {editable && lesson.nextStep ? <p className="studied-line"><span>{t("Próximo passo:")}</span> {lesson.nextStep}</p> : null}
+      {editable && lesson.privateNote ? <p className="studied-line"><span>{t("Nota privada:")}</span> {lesson.privateNote}</p> : null}
       {lesson.replaces ? <p className="studied-line link-line"><span>{t("Reposição da aula de")}</span> {formatDate(lesson.replaces.date, { day: "numeric", month: "short" }, locale)}</p> : null}
       {lesson.replacedBy ? <p className="studied-line link-line"><span>{t("Reposta em")}</span> {formatDate(lesson.replacedBy.date, { day: "numeric", month: "short" }, locale)}</p> : null}
       {lesson.teacherRecords.map((record) => <p className="studied-line" key={record.teacherName}><span>{record.teacherName} {t("registrou:")}</span> {t(teacherAttendanceLabels[record.attendance])}{lesson.status === "teacher-absent" && record.attendance === "present" ? <span className="exception-tag">{t("Registros diferentes")}</span> : null}</p>)}
@@ -42,8 +48,12 @@ export function LessonRow({ lesson, editable, locale, persisted = false, onChang
     </select></label> : <span className="row-time">◷ {lesson.time}</span>}
     {editable ? <div className="study-record-actions">
       {persisted && !cancelled ? editingContent
-        ? <form className="study-record-form" onSubmit={(event) => { void saveContent(event); }}><label>{t("O que foi estudado?")}<textarea value={content} onChange={(event) => setContent(event.target.value)} maxLength={2000} rows={3} /></label><button className="text-button" type="submit">{t("Salvar conteúdo")}</button><button className="text-button" type="button" onClick={() => { setContent(lesson.studiedContent ?? ""); setEditingContent(false); }}>{t("Cancelar")}</button></form>
-        : <button className="text-button" type="button" onClick={() => setEditingContent(true)}>{t("Registrar conteúdo estudado")}</button> : null}
+        ? <form className="study-record-form" onSubmit={(event) => { void saveContent(event); }}>
+          <label>{t("O que foi estudado?")}<textarea value={draft.studiedContent} onChange={(event) => { const value = event.target.value; setDraft((current) => ({ ...current, studiedContent: value })); }} maxLength={2000} rows={3} /></label>
+          <label>{t("Próximo passo ou tarefa")}<input value={draft.nextStep} onChange={(event) => { const value = event.target.value; setDraft((current) => ({ ...current, nextStep: value })); }} maxLength={500} /></label>
+          <label>{t("Nota privada (só você vê)")}<textarea value={draft.privateNote} onChange={(event) => { const value = event.target.value; setDraft((current) => ({ ...current, privateNote: value })); }} maxLength={2000} rows={2} /></label>
+          <button className="text-button" type="submit">{t("Salvar registro")}</button><button className="text-button" type="button" onClick={() => { setDraft(recordDraft(lesson)); setEditingContent(false); }}>{t("Cancelar")}</button></form>
+        : <button className="text-button" type="button" onClick={() => setEditingContent(true)}>{t(lesson.studiedContent || lesson.privateNote || lesson.nextStep ? "Editar registro da aula" : "Registrar o que foi estudado")}</button> : null}
       {onOpen ? <button className="text-button" type="button" onClick={onOpen}>{t("Editar ou cancelar aula")}</button> : null}
       {contentNotice ? <span className="study-record-notice" role="status">{contentNotice}</span> : null}
     </div> : null}
