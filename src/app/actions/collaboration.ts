@@ -5,10 +5,17 @@ import { refresh } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { generateInviteCode, hashInviteCode, INVITE_TTL_DAYS, normalizeInviteCode } from "@/features/collaboration/invite-code";
+import { consumeRateLimit } from "@/features/security/rate-limit";
 import { acceptInvite, createInvite, previewInvite, revokeLink, setTeacherAttendance } from "@/features/collaboration/repository";
 
 // One answer for unknown, expired, used or own codes, so a code cannot be probed for its state.
 const invalidCode = "Código inválido ou expirado. Peça um novo código ao professor.";
+const tooMany = "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
+
+// Codes have 80 bits of entropy; the limit stops guessing and accidental loops, not brute force alone.
+async function allowCodeAttempt(userId: string) {
+  return consumeRateLimit(`invite-code:${userId}`, 10, 15 * 60);
+}
 
 async function currentUserId() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -20,6 +27,7 @@ export async function createTeacherInvite() {
   if (!teacherId) return { ok: false as const, error: "Entre na sua conta para convidar alunos." };
   const code = generateInviteCode();
   try {
+    if (!await consumeRateLimit(`invite-create:${teacherId}`, 20, 24 * 60 * 60)) return { ok: false as const, error: tooMany };
     await createInvite(teacherId, hashInviteCode(normalizeInviteCode(code)!), new Date(Date.now() + INVITE_TTL_DAYS * 24 * 60 * 60 * 1000));
     refresh();
     // The code is returned once and never stored in clear.
@@ -33,6 +41,7 @@ export async function previewTeacherInvite(code: unknown) {
   const normalized = typeof code === "string" ? normalizeInviteCode(code) : null;
   if (!normalized) return { ok: false as const, error: invalidCode };
   try {
+    if (!await allowCodeAttempt(studentId)) return { ok: false as const, error: tooMany };
     const preview = await previewInvite(studentId, hashInviteCode(normalized));
     return preview ? { ok: true as const, teacherName: preview.teacherName } : { ok: false as const, error: invalidCode };
   } catch { return { ok: false as const, error: "Não foi possível verificar o código. Tente novamente." }; }
@@ -46,6 +55,7 @@ export async function acceptTeacherInvite(code: unknown, subjectIds: unknown) {
   if (!ids.success) return { ok: false as const, error: "Escolha pelo menos uma matéria para compartilhar." };
   if (!normalized) return { ok: false as const, error: invalidCode };
   try {
+    if (!await allowCodeAttempt(studentId)) return { ok: false as const, error: tooMany };
     const linkId = await acceptInvite(studentId, hashInviteCode(normalized), [...new Set(ids.data)]);
     if (!linkId) return { ok: false as const, error: invalidCode };
     refresh();

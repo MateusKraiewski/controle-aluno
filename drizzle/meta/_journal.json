@@ -85,6 +85,13 @@
       "when": 1792527563251,
       "tag": "0011_one_link_per_pair",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792527884698,
+      "tag": "0012_rate_limit",
+      "breakpoints": true
     }
   ]
 }

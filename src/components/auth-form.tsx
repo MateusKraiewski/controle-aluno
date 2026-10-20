@@ -45,7 +45,7 @@ export default function AuthForm() {
         ? await authClient.signUp.email({ name, email, password })
         : await authClient.signIn.email({ email, password });
       if (result.error) {
-        setMessage(t("Não foi possível concluir. Confira os dados ou tente novamente."));
+        setMessage(t(result.error.status === 429 ? "Muitas tentativas. Aguarde alguns minutos e tente novamente." : "Não foi possível concluir. Confira os dados ou tente novamente."));
       } else {
         router.push("/");
         router.refresh();

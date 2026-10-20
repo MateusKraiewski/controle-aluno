@@ -14,5 +14,13 @@ export const auth = betterAuth({
   trustedOrigins: [baseURL],
   database: drizzleAdapter(getDb(), { provider: "pg" }),
   emailAndPassword: { enabled: true },
+  // Counters live in PostgreSQL so limits hold across restarts and instances; enabled in dev too.
+  rateLimit: {
+    enabled: true, storage: "database", window: 60, max: 100,
+    customRules: {
+      "/sign-in/email": { window: 60, max: 5 },
+      "/sign-up/email": { window: 60 * 60, max: 5 },
+    },
+  },
   session: { expiresIn: 60 * 60 * 24 * 7, updateAge: 60 * 60 * 24 },
 });

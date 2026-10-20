@@ -51,6 +51,7 @@ const table: Record<string, [string, string, string]> = {
   "Código inválido ou expirado. Peça um novo código ao professor.": ["Código inválido ou expirado. Peça um novo código ao professor.", "Invalid or expired code. Ask the teacher for a new one.", "Código no válido o caducado. Pide un código nuevo al profesor."],
   "Escolha pelo menos uma matéria para compartilhar.": ["Escolha pelo menos uma disciplina para partilhar.", "Choose at least one subject to share.", "Elige al menos una asignatura para compartir."],
   "Esta aula já tem uma reposição. Exclua a reposição antes de reativar a original.": ["Esta aula já tem uma reposição. Elimine a reposição antes de reativar a original.", "This lesson already has a make-up. Delete the make-up before restoring the original.", "Esta clase ya tiene una recuperación. Elimina la recuperación antes de reactivar la original."],
+  "Muitas tentativas. Aguarde alguns minutos e tente novamente.": ["Demasiadas tentativas. Aguarde alguns minutos e tente novamente.", "Too many attempts. Wait a few minutes and try again.", "Demasiados intentos. Espera unos minutos y vuelve a intentarlo."],
   "Vínculo não encontrado.": ["Ligação não encontrada.", "Link not found.", "Vínculo no encontrado."],
 };
 
