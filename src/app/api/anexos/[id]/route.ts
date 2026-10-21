@@ -21,7 +21,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const id = z.uuid().safeParse((await params).id);
   if (!studentId || !id.success) return new Response(null, { status: 404 });
   const attachment = await getOwnedAttachment(studentId, id.data);
-  const bytes = attachment ? await getAttachmentStore().get(attachment.storageKey) : null;
+  const bytes = attachment ? await (await getAttachmentStore()).get(attachment.storageKey) : null;
   if (!attachment || !bytes) return new Response(null, { status: 404 });
   return new Response(new Blob([bytes as Uint8Array<ArrayBuffer>]), {
     headers: {
@@ -41,6 +41,6 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   const storageKey = await deleteOwnedAttachment(studentId, id.data);
   if (!storageKey) return Response.json({ ok: false }, { status: 404 });
   // The row is gone either way; a leftover file has no row pointing to it and is never served.
-  try { await getAttachmentStore().delete(storageKey); } catch { logger.warn({ code: "attachment_bytes_not_deleted" }, "Attachment bytes kept after row delete"); }
+  try { await (await getAttachmentStore()).delete(storageKey); } catch { logger.warn({ code: "attachment_bytes_not_deleted" }, "Attachment bytes kept after row delete"); }
   return Response.json({ ok: true });
 }

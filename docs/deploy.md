@@ -20,7 +20,10 @@ Nada foi publicado. Este guia descreve o que já está pronto no código e os pa
 | `BETTER_AUTH_URL` | sim | `https://<domínio>` exato, sem barra final |
 | `BETTER_AUTH_SECRET` | sim | `npx auth secret`; nunca reutilizar o de desenvolvimento |
 | `LOG_LEVEL` | não | `info` por padrão |
-| `ATTACHMENTS_DIR` | se usar anexos | Pasta persistente para os arquivos; ver nota abaixo |
+| `ATTACHMENTS_STORE` | não | `s3` para usar armazenamento S3-compatível; vazio = disco local |
+| `ATTACHMENTS_DIR` | disco local | Pasta persistente para os arquivos |
+| `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | com `s3` | Bucket privado e chave com permissão só de Put/Get/Delete nesse bucket |
+| `S3_REGION`, `S3_ENDPOINT`, `S3_FORCE_PATH_STYLE` | opcional | Região (padrão `auto`), endpoint para R2/MinIO e estilo de caminho |
 
 Nunca usar `NEXT_PUBLIC_*` para estes valores.
 
@@ -37,7 +40,7 @@ Nunca usar `NEXT_PUBLIC_*` para estes valores.
 
 ## Anexos
 
-O armazenamento padrão é disco local. Em servidor próprio ou contêiner com volume persistente, apontar `ATTACHMENTS_DIR` para esse volume e incluí-lo nos backups. Em hospedagem sem disco persistente (Vercel e semelhantes), é preciso implementar um `AttachmentStore` S3-compatível (interface em `src/features/attachments/store.ts`, uma única função a trocar em `getAttachmentStore`) antes de usar anexos; sem isso os envios falham.
+O armazenamento padrão é disco local: em servidor próprio ou contêiner com volume persistente, apontar `ATTACHMENTS_DIR` para esse volume e incluí-lo nos backups. Em hospedagem sem disco persistente (Vercel e semelhantes), definir `ATTACHMENTS_STORE=s3` e as variáveis `S3_*` acima (AWS S3, Cloudflare R2, MinIO ou outro compatível). O bucket deve ser **privado** e sem acesso público: o app verifica o dono e entrega o arquivo ele próprio. Objetos ficam em `attachments/<uuid>` e são gravados uma única vez. O adaptador foi testado com um cliente simulado; validar com o bucket real antes de abrir ao público.
 
 ## Antes de abrir ao público (pendente)
 

@@ -37,7 +37,7 @@ Atualizado em 20/10/2026. O percentual mede o avanço dos marcos planeados para 
 
 **Parcial (70%).** Inclui anexos privados por aula (PDF, imagem, texto). Objetivos por matéria com estado, ligação às aulas em que foram trabalhados, sugestões de revisão explicáveis e dispensáveis (sem notas nem scores) e exportação CSV do histórico.
 
-**Falta:** adaptador de armazenamento S3 para hospedagem sem disco, tarefas com prazo, visão de evolução por período e sugestões assistidas (só com consentimento).
+**Falta:** validar o adaptador S3 com um bucket real, tarefas com prazo, visão de evolução por período e sugestões assistidas (só com consentimento).
 
 ## Quality and release (10%)
 

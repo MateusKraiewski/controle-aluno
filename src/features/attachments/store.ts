@@ -25,8 +25,10 @@ export function localDiskStore(root = process.env.ATTACHMENTS_DIR || path.join(p
 }
 
 let store: AttachmentStore | undefined;
-/** Single place to swap in another backend (e.g. S3-compatible) without touching callers. */
-export function getAttachmentStore() {
-  store ??= localDiskStore();
+/** ATTACHMENTS_STORE=s3 selects the S3-compatible store (S3_* variables); anything else uses local disk. */
+export async function getAttachmentStore() {
+  if (!store) {
+    store = process.env.ATTACHMENTS_STORE === "s3" ? (await import("./s3-store")).s3StoreFromEnv() : localDiskStore();
+  }
   return store;
 }

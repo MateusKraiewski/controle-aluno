@@ -163,7 +163,7 @@ export async function removeLesson(lessonId: string, scope: unknown) {
     const result = await deleteLessons(studentId, id.data, parsedScope.data);
     if (!result) return { ok: false as const, error: "Aula não encontrada." };
     // Attachment rows cascaded with their lessons; drop the bytes now that the delete committed.
-    await Promise.all(result.attachmentKeys.map((key) => getAttachmentStore().delete(key).catch(() => undefined)));
+    await Promise.all(result.attachmentKeys.map(async (key) => (await getAttachmentStore()).delete(key).catch(() => undefined)));
     refresh();
     return { ok: true as const, deleted: result.deleted };
   } catch { return { ok: false as const, error: "Não foi possível excluir a aula. Tente novamente." }; }

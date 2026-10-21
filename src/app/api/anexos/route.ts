@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   const kind = detectKind(bytes);
   if (!kind) return fail(415, "Use PDF, PNG, JPEG, WebP ou texto simples.");
   const storageKey = randomUUID();
-  const store = getAttachmentStore();
+  const store = await getAttachmentStore();
   try {
     await store.put(storageKey, bytes);
     const result = await insertAttachment(session.user.id, lessonId.data, { storageKey, fileName: safeFileName(file.name, kind.extension), contentType: kind.contentType, sizeBytes: bytes.length }, MAX_ATTACHMENTS_PER_LESSON);
