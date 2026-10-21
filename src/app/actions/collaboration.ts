@@ -93,16 +93,17 @@ export async function recordTeacherAttendance(lessonId: unknown, attendance: unk
 
 const outcomeSchema = z.enum(["held", "student_absent", "teacher_absent", "not_held"]);
 
-export async function proposeLessonResolution(lessonId: unknown, outcome: unknown, note?: unknown) {
+export async function proposeLessonResolution(lessonId: unknown, outcome: unknown) {
   const actorId = await currentUserId();
   if (!actorId) return { ok: false as const, error: "Entre na sua conta para resolver divergências." };
-  const parsed = z.object({ lessonId: z.uuid(), outcome: outcomeSchema, note: z.string().trim().max(300).optional() }).safeParse({ lessonId, outcome, note });
+  const parsed = z.object({ lessonId: z.uuid(), outcome: outcomeSchema }).safeParse({ lessonId, outcome });
   if (!parsed.success) return { ok: false as const, error: "Confira a proposta." };
   try {
-    const result = await proposeResolution(actorId, parsed.data.lessonId, parsed.data.outcome, parsed.data.note || null);
+    const result = await proposeResolution(actorId, parsed.data.lessonId, parsed.data.outcome);
     if (result === "not_found") return { ok: false as const, error: "Aula não encontrada." };
     if (result === "no_divergence") return { ok: false as const, error: "Os registros desta aula não divergem." };
     if (result === "already_open") return { ok: false as const, error: "Já existe uma proposta aguardando resposta." };
+    if (result === "already_agreed") return { ok: false as const, error: "Esta divergência já tem um resultado combinado." };
     refresh();
     return { ok: true as const };
   } catch { return { ok: false as const, error: "Não foi possível enviar a proposta. Tente novamente." }; }
@@ -114,7 +115,9 @@ export async function answerLessonResolution(resolutionId: unknown, accept: unkn
   const parsed = z.object({ id: z.uuid(), accept: z.boolean() }).safeParse({ id: resolutionId, accept });
   if (!parsed.success) return { ok: false as const, error: "Confira a resposta." };
   try {
-    if (!await respondResolution(actorId, parsed.data.id, parsed.data.accept)) return { ok: false as const, error: "Proposta não encontrada." };
+    const result = await respondResolution(actorId, parsed.data.id, parsed.data.accept);
+    if (result === "not_found") return { ok: false as const, error: "Proposta não encontrada." };
+    if (result === "no_divergence") return { ok: false as const, error: "Os registros desta aula não divergem." };
     refresh();
     return { ok: true as const };
   } catch { return { ok: false as const, error: "Não foi possível responder. Tente novamente." }; }

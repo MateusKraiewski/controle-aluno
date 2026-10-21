@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { answerLessonResolution, proposeLessonResolution } from "@/app/actions/collaboration";
 
-export type ResolutionState = { id: string; outcome: Outcome; status: "proposed" | "agreed" | "declined"; mine: boolean } | null;
-type Outcome = "held" | "student_absent" | "teacher_absent" | "not_held";
+import type { ResolutionState } from "@/features/collaboration/resolution-view";
+
+export type { ResolutionState };
+type Outcome = NonNullable<ResolutionState>["outcome"];
 const outcomeLabels: Record<Outcome, string> = { held: "A aula aconteceu", student_absent: "O aluno faltou", teacher_absent: "O professor faltou", not_held: "A aula não aconteceu" };
 
 /** Jornada D: both reports stay; the participants agree on an outcome shown beside them. */

@@ -156,7 +156,10 @@ export async function updateLessons(studentId: string, lessonId: string, changes
       if (scope === "all") {
         await tx.update(lessonSeries).set(shared).where(and(eq(lessonSeries.id, target.seriesId!), eq(lessonSeries.studentId, studentId)));
       }
-      if (scope === "following") await splitSeries(tx, studentId, target.seriesId!, target.date, shared, changed);
+      // Split only from an untouched, current or future occurrence; otherwise the rule's dates would not line up.
+      if (scope === "following" && !target.isException && target.date >= civilToday(target.timeZone)) {
+        await splitSeries(tx, studentId, target.seriesId!, target.date, shared, changed);
+      }
     }
     // Goal links must stay within one subject; a lesson moved to another subject drops them.
     await tx.delete(lessonObjectives).where(and(eq(lessonObjectives.studentId, studentId), inArray(lessonObjectives.lessonId, changed),

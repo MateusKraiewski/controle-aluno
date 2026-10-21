@@ -7,7 +7,7 @@ import { auditEvents, lessonResolutions, participantRecords, teacherLinks } from
 import { cancelLessons, insertLesson, setLessonAttendance } from "@/features/lessons/repository";
 import { generateInviteCode, hashInviteCode, normalizeInviteCode } from "../invite-code";
 import {
-  acceptInvite, createInvite, listOwnSubjects, listStudentLinks, listTeacherLessons, listTeacherLinks,
+  resolutionKey, acceptInvite, createInvite, listOwnSubjects, listStudentLinks, listTeacherLessons, listTeacherLinks,
   latestResolutions, listTeacherRecordsForStudent, previewInvite, proposeResolution, respondResolution, revokeLink, setTeacherAttendance,
 } from "../repository";
 
@@ -79,7 +79,7 @@ describeDb("teacher links (PostgreSQL)", () => {
     expect(await setTeacherAttendance(stranger, shared, "present", null)).toBe("not_found");
     expect(await setTeacherAttendance(teacher, shared, "present", null)).toBe("saved");
     expect(await setTeacherAttendance(teacher, shared, "excused", "Avisou")).toBe("saved");
-    expect(await listTeacherRecordsForStudent(student)).toEqual([{ lessonId: shared, teacherName: teacher.slice(0, 13), attendance: "excused" }]);
+    expect(await listTeacherRecordsForStudent(student)).toEqual([expect.objectContaining({ lessonId: shared, teacherName: teacher.slice(0, 13), attendance: "excused", linkStatus: "accepted" })]);
     const [studentRow] = await getDb().select({ attendance: lessons.attendance }).from(lessons).where(eq(lessons.id, shared));
     expect(studentRow?.attendance).toBe("unrecorded");
 
@@ -110,26 +110,34 @@ describeDb("teacher links (PostgreSQL)", () => {
     const canto = (await listOwnSubjects(student)).find((subject) => subject.name === "Canto")!;
     const token = newCode();
     await createInvite(teacher, token, inWeek);
-    expect(await acceptInvite(student, token, [canto.id])).toBeTruthy();
+    const linkId = (await acceptInvite(student, token, [canto.id]))!;
+    expect(linkId).toBeTruthy();
     await setLessonAttendance(student, lesson, "teacher_absent", null);
-    expect(await proposeResolution(student, lesson, "held", null)).toBe("not_found");
+    expect(await proposeResolution(student, lesson, "held")).toBe("not_found");
     await setTeacherAttendance(teacher, lesson, "present", null);
-    expect(await proposeResolution(stranger, lesson, "held", null)).toBe("not_found");
-    expect(await proposeResolution(student, lesson, "teacher_absent", "Esperei 30 min")).toBe("proposed");
-    expect(await proposeResolution(teacher, lesson, "held", null)).toBe("already_open");
-    const open = (await latestResolutions([lesson])).get(lesson)!;
-    expect(await respondResolution(student, open.id, true)).toBe(false);
-    expect(await respondResolution(stranger, open.id, true)).toBe(false);
-    expect(await respondResolution(teacher, open.id, false)).toBe(true);
-    expect(await proposeResolution(teacher, lesson, "not_held", null)).toBe("proposed");
-    const second = (await latestResolutions([lesson])).get(lesson)!;
-    expect(await respondResolution(student, second.id, true)).toBe(true);
-    expect((await latestResolutions([lesson])).get(lesson)).toMatchObject({ outcome: "not_held", status: "agreed" });
+    expect(await proposeResolution(stranger, lesson, "held")).toBe("not_found");
+    expect(await proposeResolution(student, lesson, "teacher_absent")).toBe("proposed");
+    expect(await proposeResolution(teacher, lesson, "held")).toBe("already_open");
+    const open = (await latestResolutions([lesson])).get(resolutionKey(lesson, linkId))!;
+    expect(await respondResolution(student, open.id, true)).toBe("not_found");
+    expect(await respondResolution(stranger, open.id, true)).toBe("not_found");
+    // A second teacher linked to the same subject cannot answer a proposal on another link.
+    const secondToken = newCode();
+    await createInvite(stranger, secondToken, inWeek);
+    await acceptInvite(student, secondToken, [canto.id]);
+    await setTeacherAttendance(stranger, lesson, "present", null);
+    expect(await respondResolution(stranger, open.id, true)).toBe("not_found");
+    expect(await respondResolution(teacher, open.id, false)).toBe("saved");
+    expect(await proposeResolution(teacher, lesson, "not_held")).toBe("proposed");
+    const second = (await latestResolutions([lesson])).get(resolutionKey(lesson, linkId))!;
+    expect(await respondResolution(student, second.id, true)).toBe("saved");
+    expect((await latestResolutions([lesson])).get(resolutionKey(lesson, linkId))).toMatchObject({ outcome: "not_held", status: "agreed" });
+    expect(await proposeResolution(teacher, lesson, "held")).toBe("already_agreed");
     const [row] = await getDb().select({ attendance: lessons.attendance }).from(lessons).where(eq(lessons.id, lesson));
     expect(row?.attendance).toBe("teacher_absent");
-    expect(await listTeacherRecordsForStudent(student)).toContainEqual({ lessonId: lesson, teacherName: teacher.slice(0, 13), attendance: "present" });
+    expect(await listTeacherRecordsForStudent(student)).toContainEqual(expect.objectContaining({ lessonId: lesson, teacherName: teacher.slice(0, 13), attendance: "present" }));
     await setLessonAttendance(student, lesson, "attended", null);
     await setTeacherAttendance(teacher, lesson, "present", null);
-    expect(await proposeResolution(student, lesson, "held", null)).toBe("no_divergence");
+    expect(await proposeResolution(student, lesson, "held")).toBe("no_divergence");
   });
 });

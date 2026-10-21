@@ -106,7 +106,7 @@ export const lessonResolutions = pgTable(
   },
   (table) => [
     index("lesson_resolutions_lesson_idx").on(table.lessonId, table.proposedAt),
-    uniqueIndex("lesson_resolutions_one_open_per_lesson").on(table.lessonId).where(sql`${table.status} = 'proposed'`),
+    uniqueIndex("lesson_resolutions_one_open_per_pair").on(table.lessonId, table.linkId).where(sql`${table.status} = 'proposed'`),
     check("lesson_resolutions_responder_differs", sql`${table.respondedBy} IS NULL OR ${table.respondedBy} <> ${table.proposedBy}`),
   ],
 );

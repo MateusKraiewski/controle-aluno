@@ -148,6 +148,7 @@ const table: Record<string, [string, string, string]> = {
   "Confira a resposta.": ["Verifique a resposta.","Check the answer.","Revisa la respuesta."],
   "Proposta não encontrada.": ["Proposta não encontrada.","Proposal not found.","Propuesta no encontrada."],
   "Não foi possível responder. Tente novamente.": ["Não foi possível responder. Tente novamente.","Could not answer. Please try again.","No se pudo responder. Inténtalo de nuevo."],
+  "Esta divergência já tem um resultado combinado.": ["Esta divergência já tem um resultado combinado.", "This difference already has an agreed outcome.", "Esta diferencia ya tiene un resultado acordado."],
   "Vínculo não encontrado.": ["Ligação não encontrada.", "Link not found.", "Vínculo no encontrado."],
 };
 

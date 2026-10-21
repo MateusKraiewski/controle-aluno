@@ -47,6 +47,8 @@ O diretório tem manifesto/metadata PWA, mas localhost só está visível nesta 
 
 ## Restrições observadas
 
+- Se o servidor de desenvolvimento passar a falhar com `ReferenceError: <nome importado> is not defined` depois de editar imports, o cache do Webpack/SWC em WASM ficou desatualizado: parar o servidor, apagar `.next/dev` e `.next/cache` e iniciar de novo.
+
 - Binding SWC nativo Next para Windows retornou “não é aplicativo Win32 válido”; Next executa via WASM. Turbopack build falha nesta plataforma; dev/build foram configurados com Webpack.
 - Há limitações reais no domínio atual: divisão de série/feriados automáticos, vínculo de professor, confirmação bilateral, repositório de notas privadas, reposição ligada, timezone IANA por perfil e upload ainda não foram implementados. Edição/cancelamento por escopo e aviso de conflito já existem (ver `docs/domain-model.md`).
 - Não afirmar que conta docente, app nativo, backup/restore, deploy público, iPhone físico ou QA e2e estão prontos sem evidência.

@@ -25,6 +25,12 @@ const attendanceValue: Record<AttendanceStatus, "unrecorded" | "attended" | "stu
   upcoming: "unrecorded", attended: "attended", "student-absent": "student_absent", "teacher-absent": "teacher_absent",
 };
 
+/** Recomputes which active teacher reports differ after the student changes their own report. */
+function withDivergence(records: Lesson["teacherRecords"], attendance: (typeof attendanceValue)[AttendanceStatus]) {
+  const teacherRecords = records.map((record) => ({ ...record, divergent: record.active && reportsDiffer(attendance, record.attendance) }));
+  return { teacherRecords, divergent: teacherRecords.some((record) => record.divergent) };
+}
+
 function Navigation({ active, onChange, locale, mobile = false }: { active: View; onChange: (view: View) => void; locale: Locale; mobile?: boolean }) {
   const t = (text: string) => translate(locale, text);
   return <nav className={mobile ? "mobile-nav" : "side-nav"} aria-label={t("Navegação principal")}>
@@ -75,7 +81,7 @@ export default function StudentDashboard({ initialLessons, persisted = false, di
     if (!persisted) { setLessons((current) => current.map((lesson) => lesson.id === id ? { ...lesson, status } : lesson)); setNotice(t("Registro atualizado nesta demonstração.")); return; }
     const saved = await updateAttendance(id, attendanceValue[status]);
     if (!saved.ok) { setNotice(t(saved.error)); return; }
-    setLessons((current) => current.map((lesson) => lesson.id === id ? { ...lesson, status, divergent: lesson.teacherRecords.some((record) => reportsDiffer(attendanceValue[status], record.attendance)) } : lesson));
+    setLessons((current) => current.map((lesson) => lesson.id === id ? { ...lesson, status, ...withDivergence(lesson.teacherRecords, attendanceValue[status]) } : lesson));
     setNotice(t("Presença salva no seu histórico."));
   }
 

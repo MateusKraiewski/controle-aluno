@@ -2,13 +2,18 @@ import { headers } from "next/headers";
 import StudentDashboard, { type DashboardLesson } from "@/components/student-dashboard";
 import { auth } from "@/lib/auth";
 import { listLessonsForStudent } from "@/features/lessons/repository";
-import { latestResolutions, listTeacherRecordsForStudent, type ResolutionView } from "@/features/collaboration/repository";
+import { latestResolutions, listTeacherRecordsForStudent, resolutionKey } from "@/features/collaboration/repository";
+import { toResolutionState } from "@/features/collaboration/resolution-view";
 import { reportsDiffer } from "@/features/collaboration/divergence";
 
 export const dynamic = "force-dynamic";
 
-function toResolutionState(row: ResolutionView | undefined, viewerId: string): DashboardLesson["resolution"] {
-  return row ? { id: row.id, outcome: row.outcome, status: row.status, mine: row.proposedBy === viewerId } : null;
+/** The pair shown on a lesson: the first link whose reports differ, else the latest agreed outcome. */
+function lessonResolution(records: DashboardLesson["teacherRecords"], lookup: (linkId: string) => Parameters<typeof toResolutionState>[0], viewerId: string) {
+  const divergentRecord = records.find((record) => record.divergent);
+  if (divergentRecord) return { divergent: true, resolution: toResolutionState(lookup(divergentRecord.linkId), viewerId) };
+  const agreed = records.map((record) => lookup(record.linkId)).find((row) => row?.status === "agreed");
+  return { divergent: false, resolution: toResolutionState(agreed, viewerId) };
 }
 
 export default async function Home() {
@@ -20,7 +25,13 @@ export default async function Home() {
   const byId = new Map(rows.map((row) => [row.id, row]));
   const resolutions = await latestResolutions([...new Set(teacherRecords.map((record) => record.lessonId))]);
   const recordsByLesson = new Map<string, DashboardLesson["teacherRecords"]>();
-  for (const record of teacherRecords) recordsByLesson.set(record.lessonId, [...(recordsByLesson.get(record.lessonId) ?? []), { teacherName: record.teacherName, attendance: record.attendance }]);
+  const rowById = new Map(rows.map((row) => [row.id, row]));
+  for (const record of teacherRecords) {
+    const lesson = rowById.get(record.lessonId);
+    // Only an active link can still resolve a difference; ended links keep their report as history.
+    const divergent = record.linkStatus === "accepted" && !!lesson && reportsDiffer(lesson.attendance, record.attendance);
+    recordsByLesson.set(record.lessonId, [...(recordsByLesson.get(record.lessonId) ?? []), { teacherName: record.teacherName, attendance: record.attendance, linkId: record.linkId, active: record.linkStatus === "accepted", divergent }]);
+  }
   const replacedBy = new Map(rows.filter((row) => row.replacesLessonId).map((row) => [row.replacesLessonId!, { id: row.id, date: row.date }]));
   const initialLessons: DashboardLesson[] = rows.map((row) => ({
     id: row.id,
@@ -41,8 +52,7 @@ export default async function Home() {
     replaces: row.replacesLessonId && byId.has(row.replacesLessonId) ? { id: row.replacesLessonId, date: byId.get(row.replacesLessonId)!.date } : null,
     replacedBy: replacedBy.get(row.id) ?? null,
     teacherRecords: recordsByLesson.get(row.id) ?? [],
-    divergent: (recordsByLesson.get(row.id) ?? []).some((record) => reportsDiffer(row.attendance, record.attendance)),
-    resolution: toResolutionState(resolutions.get(row.id), session.user.id),
+    ...lessonResolution(recordsByLesson.get(row.id) ?? [], (linkId) => resolutions.get(resolutionKey(row.id, linkId)), session.user.id),
   }));
 
   return <StudentDashboard key={session.user.id} initialLessons={initialLessons} persisted displayName={session.user.name} />;

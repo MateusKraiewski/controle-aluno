@@ -95,7 +95,7 @@ function teacherScope(teacherId: string) {
 
 export async function listTeacherLessons(teacherId: string, from: string, to: string) {
   return getDb().select({
-    id: lessons.id, studentName: studentUser.name, subject: subjects.name, date: lessons.lessonDate,
+    id: lessons.id, linkId: teacherLinks.id, studentName: studentUser.name, subject: subjects.name, date: lessons.lessonDate,
     startsAt: lessons.startsAt, endsAt: lessons.endsAt, plannedContent: lessons.plannedContent, status: lessons.status,
     cancellationReason: lessons.cancellationReason, studentAttendance: lessons.attendance,
     teacherAttendance: participantRecords.attendance,
@@ -130,8 +130,9 @@ export async function setTeacherAttendance(teacherId: string, lessonId: string, 
 
 /** Teacher reports about the student's own lessons, shown beside the student's record. */
 export async function listTeacherRecordsForStudent(studentId: string) {
-  return getDb().select({ lessonId: participantRecords.lessonId, teacherName: teacherUser.name, attendance: participantRecords.attendance })
+  return getDb().select({ lessonId: participantRecords.lessonId, linkId: participantRecords.linkId, teacherName: teacherUser.name, attendance: participantRecords.attendance, linkStatus: teacherLinks.status })
     .from(participantRecords).innerJoin(lessons, eq(lessons.id, participantRecords.lessonId)).innerJoin(teacherUser, eq(teacherUser.id, participantRecords.authorId))
+    .innerJoin(teacherLinks, eq(teacherLinks.id, participantRecords.linkId))
     .where(eq(lessons.studentId, studentId)).orderBy(asc(lessons.lessonDate)).limit(2000);
 }
 
@@ -141,52 +142,61 @@ export async function listOwnSubjects(studentId: string) {
 
 export type ResolutionOutcome = "held" | "student_absent" | "teacher_absent" | "not_held";
 
-/** The accepted link and both reports for a lesson the actor takes part in, as student or teacher. */
-async function participation(tx: Tx, actorId: string, lessonId: string) {
-  const [row] = await tx.select({
+/** Every accepted link through which the actor takes part in the lesson, with both reports, in a stable order. */
+async function participations(tx: Tx, actorId: string, lessonId: string) {
+  return tx.select({
     linkId: teacherLinks.id, teacherId: teacherLinks.teacherId, studentId: lessons.studentId,
     studentAttendance: lessons.attendance, teacherAttendance: participantRecords.attendance,
   }).from(lessons)
     .innerJoin(teacherLinkSubjects, and(eq(teacherLinkSubjects.subjectId, lessons.subjectId), eq(teacherLinkSubjects.studentId, lessons.studentId)))
     .innerJoin(teacherLinks, and(eq(teacherLinks.id, teacherLinkSubjects.linkId), eq(teacherLinks.studentId, lessons.studentId), eq(teacherLinks.status, "accepted")))
     .innerJoin(participantRecords, and(eq(participantRecords.lessonId, lessons.id), eq(participantRecords.authorId, teacherLinks.teacherId)))
-    .where(and(eq(lessons.id, lessonId), or(eq(lessons.studentId, actorId), eq(teacherLinks.teacherId, actorId)))).limit(1);
-  return row ?? null;
+    .where(and(eq(lessons.id, lessonId), or(eq(lessons.studentId, actorId), eq(teacherLinks.teacherId, actorId))))
+    .orderBy(asc(teacherLinks.id));
 }
 
-/** Either participant proposes an agreed outcome while their reports differ; reports stay untouched. */
-export async function proposeResolution(actorId: string, lessonId: string, outcome: ResolutionOutcome, note: string | null) {
+/**
+ * A proposal belongs to one student–teacher pair (one link): the teacher proposes on their own link,
+ * the student on the first link whose report differs from theirs. Reports stay untouched.
+ */
+export async function proposeResolution(actorId: string, lessonId: string, outcome: ResolutionOutcome) {
   return getDb().transaction(async (tx) => {
-    const context = await participation(tx, actorId, lessonId);
-    if (!context) return "not_found" as const;
-    if (!reportsDiffer(context.studentAttendance, context.teacherAttendance)) return "no_divergence" as const;
-    const inserted = await tx.insert(lessonResolutions).values({ lessonId, linkId: context.linkId, outcome, note, proposedBy: actorId })
+    const rows = await participations(tx, actorId, lessonId);
+    if (rows.length === 0) return "not_found" as const;
+    const pair = rows.find((row) => (row.teacherId === actorId || row.studentId === actorId) && reportsDiffer(row.studentAttendance, row.teacherAttendance));
+    if (!pair) return "no_divergence" as const;
+    const [agreed] = await tx.select({ id: lessonResolutions.id }).from(lessonResolutions)
+      .where(and(eq(lessonResolutions.lessonId, lessonId), eq(lessonResolutions.linkId, pair.linkId), eq(lessonResolutions.status, "agreed"))).limit(1);
+    if (agreed) return "already_agreed" as const;
+    const inserted = await tx.insert(lessonResolutions).values({ lessonId, linkId: pair.linkId, outcome, proposedBy: actorId })
       .onConflictDoNothing().returning({ id: lessonResolutions.id });
     return inserted.length ? "proposed" as const : "already_open" as const;
   });
 }
 
-/** Only the other participant answers an open proposal, and only while the link is accepted. */
+/** Only the other side of the same link answers, while the link is accepted and the reports still differ. */
 export async function respondResolution(actorId: string, resolutionId: string, accept: boolean) {
   return getDb().transaction(async (tx) => {
-    const [proposal] = await tx.select({ lessonId: lessonResolutions.lessonId, proposedBy: lessonResolutions.proposedBy })
+    const [proposal] = await tx.select({ lessonId: lessonResolutions.lessonId, linkId: lessonResolutions.linkId, proposedBy: lessonResolutions.proposedBy })
       .from(lessonResolutions).where(and(eq(lessonResolutions.id, resolutionId), eq(lessonResolutions.status, "proposed"))).limit(1).for("update");
-    if (!proposal || proposal.proposedBy === actorId) return false;
-    const context = await participation(tx, actorId, proposal.lessonId);
-    if (!context) return false;
+    if (!proposal || proposal.proposedBy === actorId) return "not_found" as const;
+    const pair = (await participations(tx, actorId, proposal.lessonId)).find((row) => row.linkId === proposal.linkId);
+    if (!pair || (pair.studentId !== actorId && pair.teacherId !== actorId)) return "not_found" as const;
+    if (accept && !reportsDiffer(pair.studentAttendance, pair.teacherAttendance)) return "no_divergence" as const;
     await tx.update(lessonResolutions).set({ status: accept ? "agreed" : "declined", respondedBy: actorId, respondedAt: new Date() })
       .where(eq(lessonResolutions.id, resolutionId));
-    return true;
+    return "saved" as const;
   });
 }
 
-/** Latest proposal per lesson, for lessons the reader may see (as owner or linked teacher). */
+/** Latest proposal per lesson and link; callers pick the link they are part of. */
 export async function latestResolutions(lessonIds: string[]) {
   if (lessonIds.length === 0) return new Map<string, ResolutionView>();
   const rows = await getDb().select({
-    id: lessonResolutions.id, lessonId: lessonResolutions.lessonId, outcome: lessonResolutions.outcome, note: lessonResolutions.note,
+    id: lessonResolutions.id, lessonId: lessonResolutions.lessonId, linkId: lessonResolutions.linkId, outcome: lessonResolutions.outcome,
     status: lessonResolutions.status, proposedBy: lessonResolutions.proposedBy,
   }).from(lessonResolutions).where(inArray(lessonResolutions.lessonId, lessonIds)).orderBy(asc(lessonResolutions.proposedAt));
-  return new Map(rows.map((row) => [row.lessonId, row]));
+  return new Map(rows.map((row) => [resolutionKey(row.lessonId, row.linkId), row]));
 }
-export type ResolutionView = { id: string; lessonId: string; outcome: ResolutionOutcome; note: string | null; status: "proposed" | "agreed" | "declined"; proposedBy: string };
+export const resolutionKey = (lessonId: string, linkId: string) => `${lessonId}:${linkId}`;
+export type ResolutionView = { id: string; lessonId: string; linkId: string; outcome: ResolutionOutcome; status: "proposed" | "agreed" | "declined"; proposedBy: string };

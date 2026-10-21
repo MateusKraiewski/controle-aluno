@@ -1,4 +1,4 @@
-import type { ResolutionState } from "@/components/collaboration/resolution-box";
+import type { ResolutionState } from "@/features/collaboration/resolution-view";
 import type { Locale } from "@/lib/locales";
 
 export type View = "overview" | "calendar" | "history" | "subjects";
@@ -14,7 +14,7 @@ export type DashboardLesson = {
   /** The reports disagree and an agreed outcome can be proposed; see features/collaboration/divergence. */
   divergent: boolean; resolution: ResolutionState;
 };
-export type TeacherRecord = { teacherName: string; attendance: "present" | "absent" | "excused" };
+export type TeacherRecord = { teacherName: string; attendance: "present" | "absent" | "excused"; linkId: string; active: boolean; divergent: boolean };
 export type LessonLink = { id: string; date: string };
 export type Lesson = Omit<DashboardLesson, "date"> & { date: Date };
 export type AttendanceStatus = Exclude<Status, "cancelled">;

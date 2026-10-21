@@ -2,18 +2,18 @@
 
 Atualizado em 20/10/2026. O percentual mede o avanço dos marcos planeados para o produto, com pesos de escopo. Não significa que o produto esteja pronto para produção.
 
-**Progresso ponderado: 75%.** Fórmula: soma de (peso da etapa × conclusão estimada da etapa).
+**Progresso ponderado: 79%.** Fórmula: soma de (peso da etapa × conclusão estimada da etapa).
 
-[████████████████████](#product-and-architecture-20) [█████████████████████████████████░░░░░░░](#student-planner-40) [████████████░░░░░░░░](#teacher-collaboration-20) [██████░░░░](#learning-support-10) [█████░░░░░](#quality-and-release-10)
+[████████████████████](#product-and-architecture-20) [██████████████████████████████████░░░░░░](#student-planner-40) [██████████████░░░░░░](#teacher-collaboration-20) [██████░░░░](#learning-support-10) [█████░░░░░](#quality-and-release-10)
 
 | Etapa | Peso | Conclusão | Contribuição |
 |---|---:|---:|---:|
 | Product and architecture | 20% | 100% | 20 p.p. |
-| Student planner | 40% | 82% | 32,8 p.p. |
-| Teacher collaboration | 20% | 58% | 11,6 p.p. |
+| Student planner | 40% | 86% | 34,4 p.p. |
+| Teacher collaboration | 20% | 70% | 14 p.p. |
 | Learning support | 10% | 60% | 6 p.p. |
 | Quality and release | 10% | 50% | 5 p.p. |
-| **Total** | **100%** |  | **75,4% → 75%** |
+| **Total** | **100%** |  | **79,4% → 79%** |
 
 ## Product and architecture (20%)
 
@@ -23,15 +23,15 @@ Atualizado em 20/10/2026. O percentual mede o avanço dos marcos planeados para 
 
 ## Student planner (40%)
 
-**Parcial (82%).** Há autenticação, dados de aula persistidos por utilizador, criação de séries semanais/quinzenais, registo de presença e conteúdo estudado separado do planeado, edição/cancelamento/reativação/exclusão de aulas com escopo (somente esta, esta e as próximas, toda a série), exceções de série, estado “cancelada” distinto de falta e aviso de conflito com confirmação explícita, reposição ligada à aula original, feriados e pausas com prévia de impacto, nota privada e próximo passo por aula e fuso horário do perfil.
+**Parcial (86%).** Há autenticação, dados de aula persistidos por utilizador, criação de séries semanais/quinzenais, registo de presença e conteúdo estudado separado do planeado, edição/cancelamento/reativação/exclusão de aulas com escopo (somente esta, esta e as próximas, toda a série), exceções de série, estado “cancelada” distinto de falta e aviso de conflito com confirmação explícita, reposição ligada à aula original, feriados e pausas com prévia de impacto, nota privada e próximo passo por aula e fuso horário do perfil.
 
-**Falta:** dividir uma série em duas regras e feriados automáticos por calendário oficial; política explícita de DST; tarefas com prazo e materiais/anexos.
+**Falta:** feriados automáticos por calendário oficial; política explícita de DST; tarefas com prazo e materiais/anexos.
 
 ## Teacher collaboration (20%)
 
-**Parcial (58%).** Convite por código de uso único (hash, 7 dias), aceite com escolha de matérias, revogação por qualquer parte, área do professor com as aulas consentidas, relato de presença do próprio professor, visão desse relato pelo aluno com marca de divergência e auditoria dos eventos do vínculo. Coberto por testes de integração de autorização (IDOR, código expirado/reutilizado/próprio, revogação).
+**Parcial (70%).** Inclui resolução formal de divergência por proposta e aceite, com os relatos originais preservados. Convite por código de uso único (hash, 7 dias), aceite com escolha de matérias, revogação por qualquer parte, área do professor com as aulas consentidas, relato de presença do próprio professor, visão desse relato pelo aluno com marca de divergência e auditoria dos eventos do vínculo. Coberto por testes de integração de autorização (IDOR, código expirado/reutilizado/próprio, revogação).
 
-**Falta:** resolução formal de divergência com revisões, disponibilidade/agenda própria do professor e conflito entre alunos, notificações, perfil/papel docente explícito e aulas em grupo.
+**Falta:** disponibilidade/agenda própria do professor e conflito entre alunos, notificações, perfil/papel docente explícito e aulas em grupo.
 
 ## Learning support (10%)
 

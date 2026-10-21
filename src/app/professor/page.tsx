@@ -1,7 +1,8 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { TeacherArea } from "@/components/collaboration/teacher-area";
-import { latestResolutions, listTeacherLessons, listTeacherLinks } from "@/features/collaboration/repository";
+import { latestResolutions, listTeacherLessons, listTeacherLinks, resolutionKey } from "@/features/collaboration/repository";
+import { toResolutionState } from "@/features/collaboration/resolution-view";
 import { reportsDiffer } from "@/features/collaboration/divergence";
 import { auth } from "@/lib/auth";
 
@@ -22,9 +23,9 @@ export default async function TeacherPage() {
   const resolutions = await latestResolutions(lessons.map((lesson) => lesson.id));
   return <TeacherArea
     links={links.map((link) => ({ id: link.id, status: link.status, expiresAt: link.expiresAt.toISOString(), studentName: link.studentName, subjects: link.subjects }))}
-    lessons={lessons.map((lesson) => {
-      const resolution = resolutions.get(lesson.id);
-      return { ...lesson, divergent: reportsDiffer(lesson.studentAttendance, lesson.teacherAttendance),
-        resolution: resolution ? { id: resolution.id, outcome: resolution.outcome, status: resolution.status, mine: resolution.proposedBy === session.user.id } : null };
-    })} />;
+    lessons={lessons.map(({ linkId, ...lesson }) => ({
+      ...lesson, divergent: reportsDiffer(lesson.studentAttendance, lesson.teacherAttendance),
+      // Only proposals on this teacher's own link with the student.
+      resolution: toResolutionState(resolutions.get(resolutionKey(lesson.id, linkId)), session.user.id),
+    }))} />;
 }

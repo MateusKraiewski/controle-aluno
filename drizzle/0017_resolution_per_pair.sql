@@ -1,0 +1,2 @@
+DROP INDEX "lesson_resolutions_one_open_per_lesson";--> statement-breakpoint
+CREATE UNIQUE INDEX "lesson_resolutions_one_open_per_pair" ON "lesson_resolutions" USING btree ("lesson_id","link_id") WHERE "lesson_resolutions"."status" = 'proposed';
