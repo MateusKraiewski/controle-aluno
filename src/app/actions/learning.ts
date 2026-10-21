@@ -56,5 +56,5 @@ export async function removeObjective(objectiveId: unknown) {
 export async function linkObjective(objectiveId: unknown, lessonId: unknown) {
   const parsed = z.object({ objectiveId: z.uuid(), lessonId: z.uuid() }).safeParse({ objectiveId, lessonId });
   if (!parsed.success) return { ok: false as const, error: "Escolha a aula." };
-  return run((studentId) => linkObjectiveToLesson(studentId, parsed.data.objectiveId, parsed.data.lessonId), "Não foi possível ligar a aula ao objetivo.");
+  return run(async (studentId) => linkObjectiveToLesson(studentId, parsed.data.objectiveId, parsed.data.lessonId, civilToday(await getProfileTimeZone(studentId))), "Não foi possível ligar a aula ao objetivo.");
 }

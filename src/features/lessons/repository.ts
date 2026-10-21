@@ -2,6 +2,7 @@ import "server-only";
 import { and, asc, eq, gt, gte, inArray, lt, lte, ne, notInArray, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
 import { lessonSeries, lessons, subjects } from "@/db/schema";
+import { learningObjectives, lessonObjectives } from "@/db/schema/learning";
 
 type Db = ReturnType<typeof getDb>;
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
@@ -121,15 +122,19 @@ export async function updateLessons(studentId: string, lessonId: string, changes
     await tx.update(lessons).set(single ? { ...shared, lessonDate: changes.date, isException: target.seriesId !== null } : shared)
       .where(and(eq(lessons.id, target.id), eq(lessons.studentId, studentId)));
     const siblings = siblingFilter(studentId, target, scope);
-    let updated = 1;
+    const changed = [target.id];
     if (siblings) {
       const rows = await tx.update(lessons).set(shared).where(siblings).returning({ id: lessons.id });
-      updated += rows.length;
+      changed.push(...rows.map((row) => row.id));
       if (scope === "all") {
         await tx.update(lessonSeries).set(shared).where(and(eq(lessonSeries.id, target.seriesId!), eq(lessonSeries.studentId, studentId)));
       }
     }
-    return { updated };
+    // Goal links must stay within one subject; a lesson moved to another subject drops them.
+    await tx.delete(lessonObjectives).where(and(eq(lessonObjectives.studentId, studentId), inArray(lessonObjectives.lessonId, changed),
+      notInArray(lessonObjectives.objectiveId, tx.select({ id: learningObjectives.id }).from(learningObjectives)
+        .where(and(eq(learningObjectives.studentId, studentId), eq(learningObjectives.subjectId, subjectId))))));
+    return { updated: changed.length };
   });
 }
 

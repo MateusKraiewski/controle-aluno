@@ -6,7 +6,8 @@ import { lessons, subjects, user } from "@/db/schema";
 import { learningObjectives } from "@/db/schema/learning";
 import { listOwnSubjects } from "@/features/collaboration/repository";
 import { insertLesson, setStudyRecord } from "@/features/lessons/repository";
-import { createObjective, deleteObjective, linkObjectiveToLesson, listHistoryForExport, listObjectives, updateObjective } from "../repository";
+import { cancelLessons, updateLessons } from "@/features/lessons/repository";
+import { createObjective, deleteObjective, linkObjectiveToLesson, listHistoryForExport, listLinkableLessons, listObjectives, updateObjective } from "../repository";
 
 function isLocalDatabase(url: string | undefined) {
   try { return ["localhost", "127.0.0.1", "[::1]"].includes(new URL(url ?? "").hostname); } catch { return false; }
@@ -39,15 +40,23 @@ describeDb("learning objectives (PostgreSQL)", () => {
 
     expect(await createObjective(owner, foreignPhysics.id, "Invasão")).toBeNull();
     const id = (await createObjective(owner, physics.id, "Interferência"))!;
-    expect(await linkObjectiveToLesson(other, id, foreign)).toBe(false);
-    expect(await linkObjectiveToLesson(owner, id, foreign)).toBe(false);
-    expect(await linkObjectiveToLesson(owner, id, otherSubject)).toBe(false);
-    expect(await linkObjectiveToLesson(owner, id, first)).toBe(true);
-    expect(await linkObjectiveToLesson(owner, id, later)).toBe(true);
-    expect(await linkObjectiveToLesson(owner, id, later)).toBe(true);
+    const today = "2026-10-20";
+    const future = await insertLesson(owner, { subject: "Física", topic: "Futura", date: "2027-01-10", startsAt: "09:00", endsAt: "10:00" });
+    expect(await linkObjectiveToLesson(other, id, foreign, today)).toBe(false);
+    expect(await linkObjectiveToLesson(owner, id, foreign, today)).toBe(false);
+    expect(await linkObjectiveToLesson(owner, id, otherSubject, today)).toBe(false);
+    expect(await linkObjectiveToLesson(owner, id, future, today)).toBe(false);
+    expect(await linkObjectiveToLesson(owner, id, first, today)).toBe(true);
+    expect(await linkObjectiveToLesson(owner, id, later, today)).toBe(true);
+    expect(await linkObjectiveToLesson(owner, id, later, today)).toBe(true);
+    expect((await listLinkableLessons(owner, today)).map((lesson) => lesson.id)).not.toContain(future);
 
     expect(await listObjectives(other)).toEqual([]);
-    expect((await listObjectives(owner))[0]).toMatchObject({ title: "Interferência", subject: "Física", status: "open", lastWorkedOn: "2026-09-15" });
+    await cancelLessons(owner, later, null, "this");
+    expect((await listObjectives(owner))[0]?.lastWorkedOn).toBe("2026-09-01");
+    await updateLessons(owner, first, { subject: "Química", topic: "Ondas", date: "2026-09-01", startsAt: "09:00", endsAt: "10:00" }, "this");
+    expect((await listObjectives(owner))[0]?.lastWorkedOn).toBeNull();
+    expect((await listObjectives(owner))[0]).toMatchObject({ title: "Interferência", subject: "Física", status: "open", lastWorkedOn: null });
     expect(await updateObjective(other, id, { status: "done" })).toBe(false);
     expect(await updateObjective(owner, id, { status: "practising", snoozedUntil: "2026-11-01" })).toBe(true);
     expect((await listObjectives(owner))[0]).toMatchObject({ status: "practising", snoozedUntil: "2026-11-01" });

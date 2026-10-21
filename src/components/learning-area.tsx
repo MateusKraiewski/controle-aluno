@@ -40,7 +40,7 @@ export function LearningArea({ objectives, subjects, suggestions, lessons }: Pro
         <label>{t("Matéria")}<select value={draft.subjectId} onChange={(event) => { const value = event.target.value; setDraft((current) => ({ ...current, subjectId: value })); }}>{subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}</select></label>
         <label>{t("Objetivo ou tema")}<input required maxLength={200} value={draft.title} placeholder={t("Ex.: Resolver equações do 2º grau")} onChange={(event) => { const value = event.target.value; setDraft((current) => ({ ...current, title: value })); }} /></label>
         <button type="submit" className="primary-button" disabled={busy}>{t("Adicionar")}</button></form>
-        : <p className="empty-note">{t("Crie uma aula primeiro para ter matérias a compartilhar.")}</p>}
+        : <p className="empty-note">{t("Crie uma aula primeiro; os objetivos ficam ligados às suas matérias.")}</p>}
     </section>
     <section className="panel collab-panel"><h2>{t("Meus objetivos")}</h2>
       {objectives.length ? <ul className="collab-list">{objectives.map((objective) => {

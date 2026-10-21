@@ -115,6 +115,15 @@ const table: Record<string, [string, string, string]> = {
   "Baixar CSV": ["Descarregar CSV","Download CSV","Descargar CSV"],
   "Objetivo não encontrado.": ["Objetivo não encontrado.","Goal not found.","Objetivo no encontrado."],
   "Escreva o objetivo (até 200 caracteres) e escolha a matéria.": ["Escreva o objetivo (até 200 caracteres) e escolha a disciplina.","Write the goal (up to 200 characters) and choose the subject.","Escribe el objetivo (hasta 200 caracteres) y elige la asignatura."],
+  "Crie uma aula primeiro; os objetivos ficam ligados às suas matérias.": ["Crie primeiro uma aula; os objetivos ficam associados às suas disciplinas.","Create a lesson first; goals belong to your subjects.","Crea primero una clase; los objetivos se vinculan a tus asignaturas."],
+  "Entre na sua conta para acompanhar objetivos.": ["Inicie sessão para acompanhar objetivos.","Sign in to track goals.","Inicia sesión para seguir objetivos."],
+  "Não foi possível salvar o objetivo.": ["Não foi possível guardar o objetivo.","Could not save the goal.","No se pudo guardar el objetivo."],
+  "Confira o objetivo.": ["Verifique o objetivo.","Check the goal.","Revisa el objetivo."],
+  "Não foi possível atualizar o objetivo.": ["Não foi possível atualizar o objetivo.","Could not update the goal.","No se pudo actualizar el objetivo."],
+  "Não foi possível dispensar a sugestão.": ["Não foi possível dispensar a sugestão.","Could not dismiss the suggestion.","No se pudo descartar la sugerencia."],
+  "Não foi possível excluir o objetivo.": ["Não foi possível eliminar o objetivo.","Could not delete the goal.","No se pudo eliminar el objetivo."],
+  "Escolha a aula.": ["Escolha a aula.","Choose the lesson.","Elige la clase."],
+  "Não foi possível ligar a aula ao objetivo.": ["Não foi possível associar a aula ao objetivo.","Could not link the lesson to the goal.","No se pudo vincular la clase al objetivo."],
   "Vínculo não encontrado.": ["Ligação não encontrada.", "Link not found.", "Vínculo no encontrado."],
 };
 

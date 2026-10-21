@@ -2,18 +2,18 @@
 
 Atualizado em 20/10/2026. O percentual mede o avanço dos marcos planeados para o produto, com pesos de escopo. Não significa que o produto esteja pronto para produção.
 
-**Progresso ponderado: 69%.** Fórmula: soma de (peso da etapa × conclusão estimada da etapa).
+**Progresso ponderado: 75%.** Fórmula: soma de (peso da etapa × conclusão estimada da etapa).
 
-[████████████████████](#product-and-architecture-20) [█████████████████████████████████░░░░░░░](#student-planner-40) [████████████░░░░░░░░](#teacher-collaboration-20) [░░░░░░░░░░](#learning-support-10) [█████░░░░░](#quality-and-release-10)
+[████████████████████](#product-and-architecture-20) [█████████████████████████████████░░░░░░░](#student-planner-40) [████████████░░░░░░░░](#teacher-collaboration-20) [██████░░░░](#learning-support-10) [█████░░░░░](#quality-and-release-10)
 
 | Etapa | Peso | Conclusão | Contribuição |
 |---|---:|---:|---:|
 | Product and architecture | 20% | 100% | 20 p.p. |
 | Student planner | 40% | 82% | 32,8 p.p. |
 | Teacher collaboration | 20% | 58% | 11,6 p.p. |
-| Learning support | 10% | 0% | 0 p.p. |
-| Quality and release | 10% | 45% | 4,5 p.p. |
-| **Total** | **100%** |  | **68,9% → 69%** |
+| Learning support | 10% | 60% | 6 p.p. |
+| Quality and release | 10% | 50% | 5 p.p. |
+| **Total** | **100%** |  | **75,4% → 75%** |
 
 ## Product and architecture (20%)
 
@@ -25,7 +25,7 @@ Atualizado em 20/10/2026. O percentual mede o avanço dos marcos planeados para 
 
 **Parcial (82%).** Há autenticação, dados de aula persistidos por utilizador, criação de séries semanais/quinzenais, registo de presença e conteúdo estudado separado do planeado, edição/cancelamento/reativação/exclusão de aulas com escopo (somente esta, esta e as próximas, toda a série), exceções de série, estado “cancelada” distinto de falta e aviso de conflito com confirmação explícita, reposição ligada à aula original, feriados e pausas com prévia de impacto, nota privada e próximo passo por aula e fuso horário do perfil.
 
-**Falta:** dividir uma série em duas regras e feriados automáticos por calendário oficial; política explícita de DST; tarefas com prazo, materiais/anexos e exportação do histórico.
+**Falta:** dividir uma série em duas regras e feriados automáticos por calendário oficial; política explícita de DST; tarefas com prazo e materiais/anexos.
 
 ## Teacher collaboration (20%)
 
@@ -35,11 +35,13 @@ Atualizado em 20/10/2026. O percentual mede o avanço dos marcos planeados para 
 
 ## Learning support (10%)
 
-**Por iniciar.** Não estão implementados objetivos de aprendizagem, materiais/tarefas ou acompanhamento do progresso por matéria.
+**Parcial (60%).** Objetivos por matéria com estado, ligação às aulas em que foram trabalhados, sugestões de revisão explicáveis e dispensáveis (sem notas nem scores) e exportação CSV do histórico.
+
+**Falta:** materiais/anexos (depende de storage), tarefas com prazo, visão de evolução por período e sugestões assistidas (só com consentimento).
 
 ## Quality and release (10%)
 
-**Parcial (45%).** Limite de tentativas no login, cadastro e convites (PostgreSQL), 25 testes (`npm run test:db`) e revisões de código/segurança por incremento. Existem verificações locais, documentação de qualidade, testes de integração PostgreSQL de isolamento entre contas e escopos de série (`npm run test:db`), revisão de código e de segurança do incremento de 20/10/2026 e verificação manual do fluxo no navegador local.
+**Parcial (50%).** Guia de deploy pronto em `docs/deploy.md`. Limite de tentativas no login, cadastro e convites (PostgreSQL), 25 testes (`npm run test:db`) e revisões de código/segurança por incremento. Existem verificações locais, documentação de qualidade, testes de integração PostgreSQL de isolamento entre contas e escopos de série (`npm run test:db`), revisão de código e de segurança do incremento de 20/10/2026 e verificação manual do fluxo no navegador local.
 
 **Falta:** testes end-to-end e de autorização, revisão final de segurança, observabilidade e configuração de produção. Não há lançamento público de produção confirmado.
 
