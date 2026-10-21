@@ -1,20 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { updateTimeZone } from "@/app/actions/profile";
 import { localeOptions, type Locale } from "@/lib/locales";
 import { saveUiPreferences } from "@/lib/preferences";
 import { useUiPreferences } from "./use-ui-preferences";
 
+const noSubscription = () => () => {};
+const browserTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
+
 export function ProfileSettings({ name, timeZone }: { name: string; timeZone: string | null }) {
   const { locale, theme, t } = useUiPreferences();
-  const detected = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone, []);
+  // The browser's zone and zone list exist only on the client; the server renders the saved value.
+  const detected = useSyncExternalStore(noSubscription, browserTimeZone, () => null);
   const zones = useMemo(() => {
-    const all = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [detected];
-    return [...new Set([timeZone ?? detected, ...all])];
+    const all = detected && typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [];
+    return [...new Set([timeZone ?? detected ?? "UTC", ...all])];
   }, [detected, timeZone]);
-  const [zone, setZone] = useState(timeZone ?? detected);
+  const [chosen, setChosen] = useState<string | null>(null);
+  const zone = chosen ?? timeZone ?? detected ?? "UTC";
+  const setZone = setChosen;
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -29,7 +35,7 @@ export function ProfileSettings({ name, timeZone }: { name: string; timeZone: st
     {notice ? <p className="notice" role="status">{notice}</p> : null}
     <section className="panel collab-panel"><h2>{t("Fuso horário")}</h2>
       <p className="history-hint">{t("Novas séries de aulas usam este fuso. Aulas já criadas mantêm a data e a hora que você escolheu.")}</p>
-      {!timeZone ? <p className="history-hint">{t("Ainda não definido; o navegador indica:")} {detected}</p> : null}
+      {!timeZone && detected ? <p className="history-hint">{t("Ainda não definido; o navegador indica:")} {detected}</p> : null}
       <div className="collab-form"><label>{t("Fuso horário")}<select value={zone} onChange={(event) => setZone(event.target.value)}>{zones.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
         <button type="button" className="primary-button" disabled={busy} onClick={() => { void save(); }}>{t("Salvar")}</button></div>
     </section>

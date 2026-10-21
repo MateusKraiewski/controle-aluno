@@ -127,6 +127,9 @@ describeDb("lessons repository (PostgreSQL)", () => {
     expect((await listLessonsForStudent(alice)).find((row) => row.id === absent)).toMatchObject({ status: "planned", attendance: "student_absent" });
 
     expect(await restoreLesson(alice, original)).toBe("replaced");
+    await cancelLessons(alice, makeupId, null, "this");
+    expect(await restoreLesson(alice, original)).toBe("restored");
+    await cancelLessons(alice, original, null, "this");
     expect(await deleteLessons(alice, original, "this")).toEqual({ deleted: 1 });
     expect((await listLessonsForStudent(alice)).find((row) => row.id === makeupId)?.replacesLessonId).toBeNull();
   });

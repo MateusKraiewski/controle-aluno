@@ -65,7 +65,7 @@ Separar **estado da aula** (planned/completed/cancelled/rescheduled) de **estado
 
 ## Modelo implementado hoje
 
-`user`, `subjects(student_id, name, color)`, `lesson_series`, `lessons(student_id, subject_id, series_id, original_lesson_date, lesson_date, starts_at, ends_at, status, cancellation_reason, cancelled_at, is_exception, planned/studied_content, attendance, attendance_note, attendance_recorded_by/at)` e tabelas Better Auth; migrations `0000`–`0011`. Há criação de aulas avulsas e séries semanais/quinzenais (até 300 ocorrências, atomicidade, timezone da série) e autoria/hora do estado aluno.
+`user`, `subjects(student_id, name, color)`, `lesson_series`, `lessons(student_id, subject_id, series_id, original_lesson_date, lesson_date, starts_at, ends_at, status, cancellation_reason, cancelled_at, is_exception, planned/studied_content, attendance, attendance_note, attendance_recorded_by/at)` e tabelas Better Auth; migrations `0000`–`0014`. Há criação de aulas avulsas e séries semanais/quinzenais (até 300 ocorrências, atomicidade, timezone da série) e autoria/hora do estado aluno.
 
 **Estado da aula separado da presença (0008):** `status` é `planned` ou `cancelled`; cancelar guarda motivo e momento, nunca altera `attendance` e a aula cancelada não aceita registro de presença. Reativar volta a `planned`.
 
@@ -77,7 +77,15 @@ Separar **estado da aula** (planned/completed/cancelled/rescheduled) de **estado
 
 **Vínculo professor ↔ aluno (0010–0011, implementado):** `teacher_links` (`pending/accepted/revoked`, hash SHA-256 do código, validade de 7 dias, uso único, quem revogou), `teacher_link_subjects` (escopo consentido por matéria, FK composta para matérias do próprio aluno), `participant_records` (relato do professor sobre a própria presença: `present/absent/excused`, único por aula e autor) e `audit_events` (ator, ação e vínculo, sem conteúdo escolar). Qualquer conta pode gerar convite em `/professor`; o aluno usa o código em `/vinculos`, vê o nome de quem pede e o que será partilhado, escolhe as matérias e aceita. Há no máximo um vínculo aceito por par; um segundo código só amplia o escopo. Qualquer parte revoga e o acesso termina na mesma transação. O professor vê só as aulas das matérias consentidas (datas, horários, conteúdo previsto, cancelamentos e o relato de presença do aluno; nunca o conteúdo estudado) e só escreve o próprio relato. O aluno vê o relato do professor ao lado do seu e a marca “Registros diferentes” quando relatou ausência do professor e o professor registrou presença.
 
-`attendance_status` do aluno continua a ser o relato do aluno; “Relatei falta do professor” é auto-declaração do aluno, não dado do professor. Pendentes: resolução formal de divergência com nova revisão, notas privadas e objetivos de aprendizagem, rate limiting dos convites e notificações.
+`attendance_status` do aluno continua a ser o relato do aluno; “Relatei falta do professor” é auto-declaração do aluno, não dado do professor. Pendentes: resolução formal de divergência com nova revisão, objetivos de aprendizagem e notificações.
+
+**Registro pós-aula (0013):** além do conteúdo estudado, cada aula guarda `private_note` e `next_step`, escritos só pelo aluno e nunca incluídos nas consultas do professor.
+
+**Feriados e pausas:** o aluno escolhe um período e um motivo, vê quantas aulas serão afetadas e confirma. São canceladas apenas aulas `planned` sem registro de presença, de hoje em diante (no fuso do perfil, ou UTC); aulas passadas, com presença/falta ou já canceladas não mudam. Cancelamento não é falta. Uma reposição cancelada deixa de bloquear a reativação da original.
+
+**Perfil (0014):** `profiles(user_id, time_zone)` guarda o fuso IANA da conta, editável em `/perfil`. Novas séries usam esse fuso em vez do informado pelo navegador; aulas já criadas mantêm data e hora civis.
+
+**Limite de tentativas (0012):** contadores do Better Auth em PostgreSQL (`rate_limit`), ativos em todos os ambientes: login 10/min e cadastro 30/h por IP, 100/min nas demais rotas de auth; verificação e aceite de código de convite 10 por 15 min cada e criação de convites 20/dia por conta. O IP vem dos cabeçalhos do proxy: em produção, o app precisa estar atrás de um proxy que sobrescreva `x-forwarded-for`. Verificação de e-mail continua pendente porque depende de um provedor de envio.
 
 ## Evolução de schema sem perda
 

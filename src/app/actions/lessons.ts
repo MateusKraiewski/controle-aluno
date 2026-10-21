@@ -5,6 +5,7 @@ import { refresh } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { getProfileTimeZone } from "@/features/profile/repository";
+import { civilToday, isValidTimeZone } from "@/features/profile/time-zone";
 import { generateWeeklyDates } from "@/features/calendar/domain";
 import {
   cancelLessons, cancelLessonsInRange, countBreakLessons, deleteLessons, findConflicts, getLessonSlot, insertLesson, insertMakeup, insertWeeklySeries, listScopeTargets, restoreLesson,
@@ -64,11 +65,11 @@ export async function createLesson(input: unknown) {
   let dates = [data.date];
   let intervalWeeks = 1;
   if (data.repeat !== "none") {
-    // The profile zone, when set, wins over the one the browser reported.
-    data.timeZone = await getProfileTimeZone(studentId) ?? data.timeZone;
     if (!data.endsOn || data.weekdays.length === 0) return { ok: false as const, error: "Escolha até quando repetir e os dias da semana." };
-    try { new Intl.DateTimeFormat("en", { timeZone: data.timeZone }); }
-    catch { return { ok: false as const, error: "Escolha um fuso horário válido." }; }
+    // The profile zone, when set, wins over the one the browser reported.
+    try { data.timeZone = await getProfileTimeZone(studentId) ?? data.timeZone; }
+    catch { return { ok: false as const, error: "Não foi possível salvar a série de aulas. Tente novamente." }; }
+    if (!isValidTimeZone(data.timeZone)) return { ok: false as const, error: "Escolha um fuso horário válido." };
     intervalWeeks = data.repeat === "weekly" ? 1 : 2;
     try { dates = generateWeeklyDates({ startDate: data.date, endDate: data.endsOn, weekdays: data.weekdays, everyWeeks: intervalWeeks }); }
     catch { return { ok: false as const, error: "Confira as datas e os dias da recorrência." }; }
@@ -240,8 +241,12 @@ export async function scheduleBreak(input: unknown, confirm = false) {
   if (!studentId) return { ok: false as const, error: "Entre na sua conta para registrar feriados." };
   const parsed = breakInput.safeParse(input);
   if (!parsed.success) return { ok: false as const, error: parsed.error.issues[0]?.message ?? "Confira o período." };
-  const { from, to, reason } = parsed.data;
+  const { to, reason } = parsed.data;
   try {
+    // A break never rewrites the past: lessons before today keep waiting for their own record.
+    const today = civilToday(await getProfileTimeZone(studentId));
+    const from = parsed.data.from > today ? parsed.data.from : today;
+    if (to < from) return { ok: true as const, preview: true as const, count: 0 };
     if (confirm !== true) return { ok: true as const, preview: true as const, count: await countBreakLessons(studentId, from, to) };
     const cancelled = await cancelLessonsInRange(studentId, from, to, reason);
     refresh();

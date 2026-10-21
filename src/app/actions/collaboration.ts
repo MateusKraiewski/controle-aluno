@@ -13,8 +13,8 @@ const invalidCode = "Código inválido ou expirado. Peça um novo código ao pro
 const tooMany = "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
 
 // Codes have 80 bits of entropy; the limit stops guessing and accidental loops, not brute force alone.
-async function allowCodeAttempt(userId: string) {
-  return consumeRateLimit(`invite-code:${userId}`, 10, 15 * 60);
+async function allowCodeAttempt(userId: string, step: "preview" | "accept") {
+  return consumeRateLimit(`invite-${step}:${userId}`, 10, 15 * 60);
 }
 
 async function currentUserId() {
@@ -41,7 +41,7 @@ export async function previewTeacherInvite(code: unknown) {
   const normalized = typeof code === "string" ? normalizeInviteCode(code) : null;
   if (!normalized) return { ok: false as const, error: invalidCode };
   try {
-    if (!await allowCodeAttempt(studentId)) return { ok: false as const, error: tooMany };
+    if (!await allowCodeAttempt(studentId, "preview")) return { ok: false as const, error: tooMany };
     const preview = await previewInvite(studentId, hashInviteCode(normalized));
     return preview ? { ok: true as const, teacherName: preview.teacherName } : { ok: false as const, error: invalidCode };
   } catch { return { ok: false as const, error: "Não foi possível verificar o código. Tente novamente." }; }
@@ -55,7 +55,7 @@ export async function acceptTeacherInvite(code: unknown, subjectIds: unknown) {
   if (!ids.success) return { ok: false as const, error: "Escolha pelo menos uma matéria para compartilhar." };
   if (!normalized) return { ok: false as const, error: invalidCode };
   try {
-    if (!await allowCodeAttempt(studentId)) return { ok: false as const, error: tooMany };
+    if (!await allowCodeAttempt(studentId, "accept")) return { ok: false as const, error: tooMany };
     const linkId = await acceptInvite(studentId, hashInviteCode(normalized), [...new Set(ids.data)]);
     if (!linkId) return { ok: false as const, error: invalidCode };
     refresh();

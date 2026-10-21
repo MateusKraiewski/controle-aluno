@@ -156,7 +156,8 @@ export async function getLessonSlot(studentId: string, lessonId: string) {
 export async function restoreLesson(studentId: string, lessonId: string): Promise<"restored" | "replaced" | "not_found"> {
   return getDb().transaction(async (tx) => {
     const [makeup] = await tx.select({ id: lessons.id }).from(lessons)
-      .where(and(eq(lessons.studentId, studentId), eq(lessons.replacesLessonId, lessonId))).limit(1);
+      .where(and(eq(lessons.studentId, studentId), eq(lessons.replacesLessonId, lessonId), eq(lessons.status, "planned"))).limit(1);
+    // Only an active make-up blocks the original; a cancelled one no longer replaces it.
     if (makeup) return "replaced";
     const rows = await tx.update(lessons)
       .set({ status: "planned", cancellationReason: null, cancelledAt: null, updatedAt: new Date() })

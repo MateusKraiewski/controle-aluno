@@ -18,8 +18,9 @@ export const auth = betterAuth({
   rateLimit: {
     enabled: true, storage: "database", window: 60, max: 100,
     customRules: {
-      "/sign-in/email": { window: 60, max: 5 },
-      "/sign-up/email": { window: 60 * 60, max: 5 },
+      // Per client IP: generous enough for a class sharing one school network.
+      "/sign-in/email": { window: 60, max: 10 },
+      "/sign-up/email": { window: 60 * 60, max: 30 },
     },
   },
   session: { expiresIn: 60 * 60 * 24 * 7, updateAge: 60 * 60 * 24 },
