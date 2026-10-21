@@ -102,6 +102,23 @@ describeDb("lessons repository (PostgreSQL)", () => {
     expect(byId.get(later!)?.startsAt).toBe("15:00:00");
   });
 
+  it("splits the rule when editing this and the following occurrences", async () => {
+    const created = await series(alice, ["2030-08-05", "2030-08-12", "2030-08-19", "2030-08-26"]);
+    const ids = created.map((item) => item.id);
+    await updateLessons(alice, ids[2]!, { subject: "Física", topic: "Nova fase", date: "2030-08-19", startsAt: "14:00", endsAt: "15:00" }, "following");
+    const rows = await getDb().select({ id: lessons.id, seriesId: lessons.seriesId, startsAt: lessons.startsAt }).from(lessons).where(and(eq(lessons.studentId, alice), inArray(lessons.id, ids)));
+    const byId = new Map(rows.map((row) => [row.id, row]));
+    const oldSeries = byId.get(ids[0]!)!.seriesId!;
+    const newSeries = byId.get(ids[2]!)!.seriesId!;
+    expect(newSeries).not.toBe(oldSeries);
+    expect(byId.get(ids[1]!)).toMatchObject({ seriesId: oldSeries, startsAt: "09:00:00" });
+    expect(byId.get(ids[3]!)).toMatchObject({ seriesId: newSeries, startsAt: "14:00:00" });
+    const rules = await getDb().select({ id: lessonSeries.id, startsOn: lessonSeries.startsOn, endsOn: lessonSeries.endsOn, startsAt: lessonSeries.startsAt })
+      .from(lessonSeries).where(inArray(lessonSeries.id, [oldSeries, newSeries]));
+    expect(rules.find((rule) => rule.id === oldSeries)).toMatchObject({ startsOn: "2030-08-05", endsOn: "2030-08-18", startsAt: "09:00:00" });
+    expect(rules.find((rule) => rule.id === newSeries)).toMatchObject({ startsOn: "2030-08-19", endsOn: "2030-08-26", startsAt: "14:00:00" });
+  });
+
   it("deletes a whole series but keeps occurrences that already have records", async () => {
     const created = await series(alice, ["2030-05-06", "2030-05-13", "2030-05-20"]);
     await setLessonAttendance(alice, created[2]!.id, "attended", null);
