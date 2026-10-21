@@ -61,3 +61,4 @@ button.day-event{display:block;width:100%;text-align:left;font:inherit;border-to
 .break-form{margin-top:12px}
 .study-record-form input{height:36px;border:1px solid var(--line);border-radius:9px;padding:0 9px;background:var(--panel);color:var(--ink);font:inherit}
 .collab-form select{height:40px;border:1px solid var(--line);border-radius:9px;padding:0 9px;background:var(--panel);color:var(--ink);max-width:100%}
+.objective-item{align-items:flex-start}.objective-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.objective-actions select{height:34px;border:1px solid var(--line);border-radius:8px;padding:0 8px;background:var(--panel);color:var(--ink);font-size:11px}.export-option{display:flex;align-items:center;gap:7px;font-size:12px}.export-link{justify-self:start;text-decoration:none}

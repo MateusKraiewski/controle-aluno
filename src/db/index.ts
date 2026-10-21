@@ -5,8 +5,9 @@ import { getDatabaseUrl } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import * as baseSchema from "./schema";
 import * as collaborationSchema from "./schema/collaboration";
+import * as learningSchema from "./schema/learning";
 
-const schema = { ...baseSchema, ...collaborationSchema };
+const schema = { ...baseSchema, ...collaborationSchema, ...learningSchema };
 
 const globals = globalThis as typeof globalThis & { __appPostgresPool?: Pool };
 let cached: { client: Pool; db: NodePgDatabase<typeof schema> } | undefined;
