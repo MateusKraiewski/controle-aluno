@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { updateStudyRecord } from "@/app/actions/lessons";
+import { ResolutionBox } from "@/components/collaboration/resolution-box";
 import { translate, type Locale } from "@/lib/locales";
 import { formatDate, lessonSummary, statusLabels, type AttendanceStatus, type Lesson, type Status } from "./lesson-model";
 
@@ -40,7 +41,8 @@ export function LessonRow({ lesson, editable, locale, persisted = false, onChang
       {editable && lesson.privateNote ? <p className="studied-line"><span>{t("Nota privada:")}</span> {lesson.privateNote}</p> : null}
       {lesson.replaces ? <p className="studied-line link-line"><span>{t("Reposição da aula de")}</span> {formatDate(lesson.replaces.date, { day: "numeric", month: "short" }, locale)}</p> : null}
       {lesson.replacedBy ? <p className="studied-line link-line"><span>{t("Reposta em")}</span> {formatDate(lesson.replacedBy.date, { day: "numeric", month: "short" }, locale)}</p> : null}
-      {lesson.teacherRecords.map((record) => <p className="studied-line" key={record.teacherName}><span>{record.teacherName} {t("registrou:")}</span> {t(teacherAttendanceLabels[record.attendance])}{lesson.status === "teacher-absent" && record.attendance === "present" ? <span className="exception-tag">{t("Registros diferentes")}</span> : null}</p>)}
+      {lesson.teacherRecords.map((record) => <p className="studied-line" key={record.teacherName}><span>{record.teacherName} {t("registrou:")}</span> {t(teacherAttendanceLabels[record.attendance])}{lesson.divergent ? <span className="exception-tag">{t("Registros diferentes")}</span> : null}</p>)}
+      {editable && persisted ? <ResolutionBox lessonId={lesson.id} divergent={lesson.divergent} resolution={lesson.resolution} t={t} onMessage={setContentNotice} /> : null}
       {cancelled && lesson.cancellationReason ? <p className="studied-line"><span>{t("Motivo:")}</span> {lesson.cancellationReason}</p> : null}
       <span className="lesson-meta">{formatDate(lesson.date, { weekday: "short", day: "numeric", month: "short" }, locale)} · {lesson.time}–{lesson.endTime} · {lesson.teacher}</span></div>
     {editable && !cancelled ? <label className="status-select"><span className="sr-only">{t("Situação de")} {lesson.subject}</span><select value={lesson.status} aria-label={`${t("Registrar situação de")} ${lesson.subject}`} onChange={(event) => onChange?.(event.target.value as AttendanceStatus)}>

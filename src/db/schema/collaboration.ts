@@ -82,3 +82,31 @@ export const auditEvents = pgTable(
   },
   (table) => [index("audit_events_link_idx").on(table.linkId, table.createdAt), index("audit_events_actor_idx").on(table.actorId)],
 );
+
+export const resolutionOutcome = pgEnum("resolution_outcome", ["held", "student_absent", "teacher_absent", "not_held"]);
+export const resolutionStatus = pgEnum("resolution_status", ["proposed", "agreed", "declined"]);
+
+/**
+ * When the two reports differ, one participant proposes an agreed outcome and the other accepts or
+ * declines. The original reports are never changed; the agreed outcome is shown beside them.
+ */
+export const lessonResolutions = pgTable(
+  "lesson_resolutions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    lessonId: uuid("lesson_id").notNull().references(() => lessons.id, { onDelete: "cascade" }),
+    linkId: uuid("link_id").notNull().references(() => teacherLinks.id),
+    outcome: resolutionOutcome("outcome").notNull(),
+    note: text("note"),
+    status: resolutionStatus("status").notNull().default("proposed"),
+    proposedBy: text("proposed_by").notNull().references(() => user.id),
+    proposedAt: timestamp("proposed_at", { withTimezone: true }).notNull().defaultNow(),
+    respondedBy: text("responded_by").references(() => user.id),
+    respondedAt: timestamp("responded_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("lesson_resolutions_lesson_idx").on(table.lessonId, table.proposedAt),
+    uniqueIndex("lesson_resolutions_one_open_per_lesson").on(table.lessonId).where(sql`${table.status} = 'proposed'`),
+    check("lesson_resolutions_responder_differs", sql`${table.respondedBy} IS NULL OR ${table.respondedBy} <> ${table.proposedBy}`),
+  ],
+);

@@ -3,12 +3,12 @@ import { eq, inArray, or } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { closeDatabase, getDb } from "@/db";
 import { lessonSeries, lessons, subjects, user } from "@/db/schema";
-import { auditEvents, participantRecords, teacherLinks } from "@/db/schema/collaboration";
-import { cancelLessons, insertLesson } from "@/features/lessons/repository";
+import { auditEvents, lessonResolutions, participantRecords, teacherLinks } from "@/db/schema/collaboration";
+import { cancelLessons, insertLesson, setLessonAttendance } from "@/features/lessons/repository";
 import { generateInviteCode, hashInviteCode, normalizeInviteCode } from "../invite-code";
 import {
   acceptInvite, createInvite, listOwnSubjects, listStudentLinks, listTeacherLessons, listTeacherLinks,
-  listTeacherRecordsForStudent, previewInvite, revokeLink, setTeacherAttendance,
+  latestResolutions, listTeacherRecordsForStudent, previewInvite, proposeResolution, respondResolution, revokeLink, setTeacherAttendance,
 } from "../repository";
 
 function isLocalDatabase(url: string | undefined) {
@@ -32,6 +32,7 @@ describeDb("teacher links (PostgreSQL)", () => {
   afterAll(async () => {
     const db = getDb();
     const links = (await db.select({ id: teacherLinks.id }).from(teacherLinks).where(or(inArray(teacherLinks.teacherId, people), inArray(teacherLinks.studentId, people)))).map((row) => row.id);
+    await db.delete(lessonResolutions).where(inArray(lessonResolutions.proposedBy, people));
     await db.delete(participantRecords).where(inArray(participantRecords.authorId, people));
     if (links.length) await db.delete(auditEvents).where(inArray(auditEvents.linkId, links));
     await db.delete(auditEvents).where(inArray(auditEvents.actorId, people));
@@ -102,5 +103,33 @@ describeDb("teacher links (PostgreSQL)", () => {
     expect(await previewInvite(student, pending)).toBeNull();
     const audit = await getDb().select({ action: auditEvents.action }).from(auditEvents).where(eq(auditEvents.linkId, pendingId));
     expect(audit.map((row) => row.action).toSorted()).toEqual(["invite_created", "link_revoked"]);
+  });
+
+  it("resolves differing reports by proposal and acceptance, keeping both reports", async () => {
+    const lesson = await insertLesson(student, { subject: "Canto", topic: "Respiração", date: "2030-10-07", startsAt: "18:00", endsAt: "19:00" });
+    const canto = (await listOwnSubjects(student)).find((subject) => subject.name === "Canto")!;
+    const token = newCode();
+    await createInvite(teacher, token, inWeek);
+    expect(await acceptInvite(student, token, [canto.id])).toBeTruthy();
+    await setLessonAttendance(student, lesson, "teacher_absent", null);
+    expect(await proposeResolution(student, lesson, "held", null)).toBe("not_found");
+    await setTeacherAttendance(teacher, lesson, "present", null);
+    expect(await proposeResolution(stranger, lesson, "held", null)).toBe("not_found");
+    expect(await proposeResolution(student, lesson, "teacher_absent", "Esperei 30 min")).toBe("proposed");
+    expect(await proposeResolution(teacher, lesson, "held", null)).toBe("already_open");
+    const open = (await latestResolutions([lesson])).get(lesson)!;
+    expect(await respondResolution(student, open.id, true)).toBe(false);
+    expect(await respondResolution(stranger, open.id, true)).toBe(false);
+    expect(await respondResolution(teacher, open.id, false)).toBe(true);
+    expect(await proposeResolution(teacher, lesson, "not_held", null)).toBe("proposed");
+    const second = (await latestResolutions([lesson])).get(lesson)!;
+    expect(await respondResolution(student, second.id, true)).toBe(true);
+    expect((await latestResolutions([lesson])).get(lesson)).toMatchObject({ outcome: "not_held", status: "agreed" });
+    const [row] = await getDb().select({ attendance: lessons.attendance }).from(lessons).where(eq(lessons.id, lesson));
+    expect(row?.attendance).toBe("teacher_absent");
+    expect(await listTeacherRecordsForStudent(student)).toContainEqual({ lessonId: lesson, teacherName: teacher.slice(0, 13), attendance: "present" });
+    await setLessonAttendance(student, lesson, "attended", null);
+    await setTeacherAttendance(teacher, lesson, "present", null);
+    expect(await proposeResolution(student, lesson, "held", null)).toBe("no_divergence");
   });
 });

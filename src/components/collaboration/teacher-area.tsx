@@ -5,12 +5,14 @@ import Link from "next/link";
 import { createTeacherInvite, recordTeacherAttendance, revokeTeacherLink } from "@/app/actions/collaboration";
 import { formatDate } from "@/components/dashboard/lesson-model";
 import { useUiPreferences } from "@/components/use-ui-preferences";
+import { ResolutionBox, type ResolutionState } from "./resolution-box";
 
 export type TeacherLinkView = { id: string; status: "pending" | "accepted" | "revoked"; expiresAt: string; studentName: string | null; subjects: string[] };
 export type TeacherLessonView = {
   id: string; studentName: string; subject: string; date: string; startsAt: string; endsAt: string; plannedContent: string | null;
   status: "planned" | "cancelled"; cancellationReason: string | null;
   studentAttendance: "unrecorded" | "attended" | "student_absent" | "teacher_absent"; teacherAttendance: "present" | "absent" | "excused" | null;
+  divergent: boolean; resolution: ResolutionState;
 };
 
 const studentReport: Record<TeacherLessonView["studentAttendance"], string> = {
@@ -56,10 +58,11 @@ export function TeacherArea({ links, lessons }: { links: TeacherLinkView[]; less
     </section>
     <section className="panel collab-panel"><h2>{t("Aulas compartilhadas (30 dias antes e depois)")}</h2>
       {lessons.length ? <div className="lesson-list">{lessons.map((lesson) => {
-        const divergent = lesson.studentAttendance === "teacher_absent" && lesson.teacherAttendance === "present";
+        const divergent = lesson.divergent;
         return <article className={`lesson-row ${lesson.status === "cancelled" ? "is-cancelled" : ""}`} key={lesson.id}>
           <div className="lesson-main"><div className="lesson-title-line"><strong>{lesson.subject}</strong> · {lesson.studentName}{divergent ? <span className="exception-tag">{t("Registros diferentes")}</span> : null}</div>
             <p>{lesson.plannedContent || t("Aula sem conteúdo registrado")}</p>
+            <ResolutionBox lessonId={lesson.id} divergent={divergent} resolution={lesson.resolution} t={t} onMessage={setNotice} />
             <span className="lesson-meta">{formatDate(lesson.date, { weekday: "short", day: "numeric", month: "short" }, locale)} · {lesson.startsAt.slice(0, 5)}–{lesson.endsAt.slice(0, 5)} · {lesson.status === "cancelled" ? `${t("Cancelada")}${lesson.cancellationReason ? ` (${lesson.cancellationReason})` : ""}` : t(studentReport[lesson.studentAttendance])}</span></div>
           {lesson.status === "planned" ? <label className="status-select"><span className="sr-only">{t("Minha presença em")} {lesson.subject}</span>
             <select aria-label={`${t("Minha presença em")} ${lesson.subject}`} value={lesson.teacherAttendance ?? ""} disabled={busy} onChange={(event) => { const value = event.target.value; void run(() => recordTeacherAttendance(lesson.id, value === "" ? null : value), "Registro salvo."); }}>

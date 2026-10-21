@@ -1,3 +1,4 @@
+import type { ResolutionState } from "@/components/collaboration/resolution-box";
 import type { Locale } from "@/lib/locales";
 
 export type View = "overview" | "calendar" | "history" | "subjects";
@@ -10,6 +11,8 @@ export type DashboardLesson = {
   replaces: LessonLink | null; replacedBy: LessonLink | null;
   /** Each linked teacher’s own attendance report; never written by the student. */
   teacherRecords: TeacherRecord[];
+  /** The reports disagree and an agreed outcome can be proposed; see features/collaboration/divergence. */
+  divergent: boolean; resolution: ResolutionState;
 };
 export type TeacherRecord = { teacherName: string; attendance: "present" | "absent" | "excused" };
 export type LessonLink = { id: string; date: string };
@@ -27,7 +30,7 @@ export function dateAt(offset: number, time: string) {
 }
 
 function demoLesson(id: string, subject: string, offset: number, time: string, endTime: string, plannedContent: string, teacher: string, status: Status): Lesson {
-  return { id, subject, date: dateAt(offset, time), time, endTime, plannedContent, studiedContent: null, privateNote: null, nextStep: null, teacher, status, isSeries: false, isException: false, cancellationReason: null, replaces: null, replacedBy: null, teacherRecords: [] };
+  return { id, subject, date: dateAt(offset, time), time, endTime, plannedContent, studiedContent: null, privateNote: null, nextStep: null, teacher, status, isSeries: false, isException: false, cancellationReason: null, replaces: null, replacedBy: null, teacherRecords: [], divergent: false, resolution: null };
 }
 
 export function demoLessons(): Lesson[] {

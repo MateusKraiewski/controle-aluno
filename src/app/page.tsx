@@ -2,9 +2,14 @@ import { headers } from "next/headers";
 import StudentDashboard, { type DashboardLesson } from "@/components/student-dashboard";
 import { auth } from "@/lib/auth";
 import { listLessonsForStudent } from "@/features/lessons/repository";
-import { listTeacherRecordsForStudent } from "@/features/collaboration/repository";
+import { latestResolutions, listTeacherRecordsForStudent, type ResolutionView } from "@/features/collaboration/repository";
+import { reportsDiffer } from "@/features/collaboration/divergence";
 
 export const dynamic = "force-dynamic";
+
+function toResolutionState(row: ResolutionView | undefined, viewerId: string): DashboardLesson["resolution"] {
+  return row ? { id: row.id, outcome: row.outcome, status: row.status, mine: row.proposedBy === viewerId } : null;
+}
 
 export default async function Home() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -13,6 +18,7 @@ export default async function Home() {
   const [rows, teacherRecords] = await Promise.all([listLessonsForStudent(session.user.id), listTeacherRecordsForStudent(session.user.id)]);
 
   const byId = new Map(rows.map((row) => [row.id, row]));
+  const resolutions = await latestResolutions([...new Set(teacherRecords.map((record) => record.lessonId))]);
   const recordsByLesson = new Map<string, DashboardLesson["teacherRecords"]>();
   for (const record of teacherRecords) recordsByLesson.set(record.lessonId, [...(recordsByLesson.get(record.lessonId) ?? []), { teacherName: record.teacherName, attendance: record.attendance }]);
   const replacedBy = new Map(rows.filter((row) => row.replacesLessonId).map((row) => [row.replacesLessonId!, { id: row.id, date: row.date }]));
@@ -35,6 +41,8 @@ export default async function Home() {
     replaces: row.replacesLessonId && byId.has(row.replacesLessonId) ? { id: row.replacesLessonId, date: byId.get(row.replacesLessonId)!.date } : null,
     replacedBy: replacedBy.get(row.id) ?? null,
     teacherRecords: recordsByLesson.get(row.id) ?? [],
+    divergent: (recordsByLesson.get(row.id) ?? []).some((record) => reportsDiffer(row.attendance, record.attendance)),
+    resolution: toResolutionState(resolutions.get(row.id), session.user.id),
   }));
 
   return <StudentDashboard key={session.user.id} initialLessons={initialLessons} persisted displayName={session.user.name} />;

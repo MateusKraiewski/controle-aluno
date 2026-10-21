@@ -6,7 +6,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { generateInviteCode, hashInviteCode, INVITE_TTL_DAYS, normalizeInviteCode } from "@/features/collaboration/invite-code";
 import { consumeRateLimit } from "@/features/security/rate-limit";
-import { acceptInvite, createInvite, previewInvite, revokeLink, setTeacherAttendance } from "@/features/collaboration/repository";
+import { acceptInvite, createInvite, previewInvite, proposeResolution, respondResolution, revokeLink, setTeacherAttendance } from "@/features/collaboration/repository";
 
 // One answer for unknown, expired, used or own codes, so a code cannot be probed for its state.
 const invalidCode = "Código inválido ou expirado. Peça um novo código ao professor.";
@@ -89,4 +89,33 @@ export async function recordTeacherAttendance(lessonId: unknown, attendance: unk
     refresh();
     return { ok: true as const };
   } catch { return { ok: false as const, error: "Não foi possível salvar o registro. Tente novamente." }; }
+}
+
+const outcomeSchema = z.enum(["held", "student_absent", "teacher_absent", "not_held"]);
+
+export async function proposeLessonResolution(lessonId: unknown, outcome: unknown, note?: unknown) {
+  const actorId = await currentUserId();
+  if (!actorId) return { ok: false as const, error: "Entre na sua conta para resolver divergências." };
+  const parsed = z.object({ lessonId: z.uuid(), outcome: outcomeSchema, note: z.string().trim().max(300).optional() }).safeParse({ lessonId, outcome, note });
+  if (!parsed.success) return { ok: false as const, error: "Confira a proposta." };
+  try {
+    const result = await proposeResolution(actorId, parsed.data.lessonId, parsed.data.outcome, parsed.data.note || null);
+    if (result === "not_found") return { ok: false as const, error: "Aula não encontrada." };
+    if (result === "no_divergence") return { ok: false as const, error: "Os registros desta aula não divergem." };
+    if (result === "already_open") return { ok: false as const, error: "Já existe uma proposta aguardando resposta." };
+    refresh();
+    return { ok: true as const };
+  } catch { return { ok: false as const, error: "Não foi possível enviar a proposta. Tente novamente." }; }
+}
+
+export async function answerLessonResolution(resolutionId: unknown, accept: unknown) {
+  const actorId = await currentUserId();
+  if (!actorId) return { ok: false as const, error: "Entre na sua conta para resolver divergências." };
+  const parsed = z.object({ id: z.uuid(), accept: z.boolean() }).safeParse({ id: resolutionId, accept });
+  if (!parsed.success) return { ok: false as const, error: "Confira a resposta." };
+  try {
+    if (!await respondResolution(actorId, parsed.data.id, parsed.data.accept)) return { ok: false as const, error: "Proposta não encontrada." };
+    refresh();
+    return { ok: true as const };
+  } catch { return { ok: false as const, error: "Não foi possível responder. Tente novamente." }; }
 }

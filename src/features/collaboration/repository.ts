@@ -3,7 +3,10 @@ import { and, asc, eq, gt, gte, inArray, lte, or } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { getDb } from "@/db";
 import { lessons, subjects, user } from "@/db/schema";
-import { auditEvents, participantRecords, teacherLinks, teacherLinkSubjects } from "@/db/schema/collaboration";
+import { auditEvents, lessonResolutions, participantRecords, teacherLinks, teacherLinkSubjects } from "@/db/schema/collaboration";
+import { reportsDiffer } from "./divergence";
+
+type Tx = Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0];
 
 export type ParticipantAttendance = "present" | "absent" | "excused";
 const teacherUser = alias(user, "teacher_user");
@@ -135,3 +138,55 @@ export async function listTeacherRecordsForStudent(studentId: string) {
 export async function listOwnSubjects(studentId: string) {
   return getDb().select({ id: subjects.id, name: subjects.name }).from(subjects).where(eq(subjects.studentId, studentId)).orderBy(asc(subjects.name)).limit(200);
 }
+
+export type ResolutionOutcome = "held" | "student_absent" | "teacher_absent" | "not_held";
+
+/** The accepted link and both reports for a lesson the actor takes part in, as student or teacher. */
+async function participation(tx: Tx, actorId: string, lessonId: string) {
+  const [row] = await tx.select({
+    linkId: teacherLinks.id, teacherId: teacherLinks.teacherId, studentId: lessons.studentId,
+    studentAttendance: lessons.attendance, teacherAttendance: participantRecords.attendance,
+  }).from(lessons)
+    .innerJoin(teacherLinkSubjects, and(eq(teacherLinkSubjects.subjectId, lessons.subjectId), eq(teacherLinkSubjects.studentId, lessons.studentId)))
+    .innerJoin(teacherLinks, and(eq(teacherLinks.id, teacherLinkSubjects.linkId), eq(teacherLinks.studentId, lessons.studentId), eq(teacherLinks.status, "accepted")))
+    .innerJoin(participantRecords, and(eq(participantRecords.lessonId, lessons.id), eq(participantRecords.authorId, teacherLinks.teacherId)))
+    .where(and(eq(lessons.id, lessonId), or(eq(lessons.studentId, actorId), eq(teacherLinks.teacherId, actorId)))).limit(1);
+  return row ?? null;
+}
+
+/** Either participant proposes an agreed outcome while their reports differ; reports stay untouched. */
+export async function proposeResolution(actorId: string, lessonId: string, outcome: ResolutionOutcome, note: string | null) {
+  return getDb().transaction(async (tx) => {
+    const context = await participation(tx, actorId, lessonId);
+    if (!context) return "not_found" as const;
+    if (!reportsDiffer(context.studentAttendance, context.teacherAttendance)) return "no_divergence" as const;
+    const inserted = await tx.insert(lessonResolutions).values({ lessonId, linkId: context.linkId, outcome, note, proposedBy: actorId })
+      .onConflictDoNothing().returning({ id: lessonResolutions.id });
+    return inserted.length ? "proposed" as const : "already_open" as const;
+  });
+}
+
+/** Only the other participant answers an open proposal, and only while the link is accepted. */
+export async function respondResolution(actorId: string, resolutionId: string, accept: boolean) {
+  return getDb().transaction(async (tx) => {
+    const [proposal] = await tx.select({ lessonId: lessonResolutions.lessonId, proposedBy: lessonResolutions.proposedBy })
+      .from(lessonResolutions).where(and(eq(lessonResolutions.id, resolutionId), eq(lessonResolutions.status, "proposed"))).limit(1).for("update");
+    if (!proposal || proposal.proposedBy === actorId) return false;
+    const context = await participation(tx, actorId, proposal.lessonId);
+    if (!context) return false;
+    await tx.update(lessonResolutions).set({ status: accept ? "agreed" : "declined", respondedBy: actorId, respondedAt: new Date() })
+      .where(eq(lessonResolutions.id, resolutionId));
+    return true;
+  });
+}
+
+/** Latest proposal per lesson, for lessons the reader may see (as owner or linked teacher). */
+export async function latestResolutions(lessonIds: string[]) {
+  if (lessonIds.length === 0) return new Map<string, ResolutionView>();
+  const rows = await getDb().select({
+    id: lessonResolutions.id, lessonId: lessonResolutions.lessonId, outcome: lessonResolutions.outcome, note: lessonResolutions.note,
+    status: lessonResolutions.status, proposedBy: lessonResolutions.proposedBy,
+  }).from(lessonResolutions).where(inArray(lessonResolutions.lessonId, lessonIds)).orderBy(asc(lessonResolutions.proposedAt));
+  return new Map(rows.map((row) => [row.lessonId, row]));
+}
+export type ResolutionView = { id: string; lessonId: string; outcome: ResolutionOutcome; note: string | null; status: "proposed" | "agreed" | "declined"; proposedBy: string };

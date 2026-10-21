@@ -1,7 +1,8 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { TeacherArea } from "@/components/collaboration/teacher-area";
-import { listTeacherLessons, listTeacherLinks } from "@/features/collaboration/repository";
+import { latestResolutions, listTeacherLessons, listTeacherLinks } from "@/features/collaboration/repository";
+import { reportsDiffer } from "@/features/collaboration/divergence";
 import { auth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +19,12 @@ export default async function TeacherPage() {
     // One extra day each side covers every time zone; the server clock is UTC.
     listTeacherLessons(session.user.id, dayKey(-31), dayKey(31)),
   ]);
+  const resolutions = await latestResolutions(lessons.map((lesson) => lesson.id));
   return <TeacherArea
     links={links.map((link) => ({ id: link.id, status: link.status, expiresAt: link.expiresAt.toISOString(), studentName: link.studentName, subjects: link.subjects }))}
-    lessons={lessons} />;
+    lessons={lessons.map((lesson) => {
+      const resolution = resolutions.get(lesson.id);
+      return { ...lesson, divergent: reportsDiffer(lesson.studentAttendance, lesson.teacherAttendance),
+        resolution: resolution ? { id: resolution.id, outcome: resolution.outcome, status: resolution.status, mine: resolution.proposedBy === session.user.id } : null };
+    })} />;
 }

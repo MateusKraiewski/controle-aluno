@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { updateAttendance } from "@/app/actions/lessons";
+import { reportsDiffer } from "@/features/collaboration/divergence";
 import { authClient } from "@/lib/auth-client";
 import { localeOptions, type Locale, translate } from "@/lib/locales";
 import { saveUiPreferences } from "@/lib/preferences";
@@ -74,7 +75,7 @@ export default function StudentDashboard({ initialLessons, persisted = false, di
     if (!persisted) { setLessons((current) => current.map((lesson) => lesson.id === id ? { ...lesson, status } : lesson)); setNotice(t("Registro atualizado nesta demonstração.")); return; }
     const saved = await updateAttendance(id, attendanceValue[status]);
     if (!saved.ok) { setNotice(t(saved.error)); return; }
-    setLessons((current) => current.map((lesson) => lesson.id === id ? { ...lesson, status } : lesson));
+    setLessons((current) => current.map((lesson) => lesson.id === id ? { ...lesson, status, divergent: lesson.teacherRecords.some((record) => reportsDiffer(attendanceValue[status], record.attendance)) } : lesson));
     setNotice(t("Presença salva no seu histórico."));
   }
 
