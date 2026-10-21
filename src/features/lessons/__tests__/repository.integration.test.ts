@@ -122,10 +122,10 @@ describeDb("lessons repository (PostgreSQL)", () => {
   it("deletes a whole series but keeps occurrences that already have records", async () => {
     const created = await series(alice, ["2030-05-06", "2030-05-13", "2030-05-20"]);
     await setLessonAttendance(alice, created[2]!.id, "attended", null);
-    expect(await deleteLessons(alice, created[0]!.id, "all")).toEqual({ deleted: 2 });
+    expect(await deleteLessons(alice, created[0]!.id, "all")).toEqual({ deleted: 2, attachmentKeys: [] });
     const remaining = await getDb().select({ id: lessons.id }).from(lessons).where(and(eq(lessons.studentId, alice), inArray(lessons.id, created.map((item) => item.id))));
     expect(remaining.map((row) => row.id)).toEqual([created[2]!.id]);
-    expect(await deleteLessons(alice, created[2]!.id, "this")).toEqual({ deleted: 1 });
+    expect(await deleteLessons(alice, created[2]!.id, "this")).toEqual({ deleted: 1, attachmentKeys: [] });
   });
   it("links a make-up to its original, cancels only unrecorded originals and survives deleting the original", async () => {
     const original = await insertLesson(alice, { subject: "Artes", topic: "Cor", date: "2030-07-01", startsAt: "08:00", endsAt: "09:00" });
@@ -147,7 +147,7 @@ describeDb("lessons repository (PostgreSQL)", () => {
     await cancelLessons(alice, makeupId, null, "this");
     expect(await restoreLesson(alice, original)).toBe("restored");
     await cancelLessons(alice, original, null, "this");
-    expect(await deleteLessons(alice, original, "this")).toEqual({ deleted: 1 });
+    expect(await deleteLessons(alice, original, "this")).toEqual({ deleted: 1, attachmentKeys: [] });
     expect((await listLessonsForStudent(alice)).find((row) => row.id === makeupId)?.replacesLessonId).toBeNull();
   });
 

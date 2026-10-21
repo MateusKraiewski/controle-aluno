@@ -7,7 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { closeDatabase, getDb } from "@/db";
 import { lessons, subjects, user } from "@/db/schema";
 import { deleteLessons, insertLesson } from "@/features/lessons/repository";
-import { attachmentKeysForLessons, deleteOwnedAttachment, existingAttachmentKeys, getOwnedAttachment, insertAttachment, listAttachmentsForStudent } from "../repository";
+import { deleteOwnedAttachment, getOwnedAttachment, insertAttachment, listAttachmentsForStudent } from "../repository";
 import { localDiskStore } from "../store";
 
 function isLocalDatabase(url: string | undefined) {
@@ -48,13 +48,11 @@ describeDb("lesson attachments (PostgreSQL + disk store)", () => {
     expect(await deleteOwnedAttachment(owner, id)).toMatch(/^[0-9a-f-]{36}$/);
   });
 
-  it("lets the caller drop bytes whose lesson was deleted", async () => {
+  it("returns the storage keys of the files removed with deleted lessons", async () => {
     const lesson = await insertLesson(owner, { subject: "Geo", topic: "Relevo", date: "2030-11-05", startsAt: "09:00", endsAt: "10:00" });
     const key = randomUUID();
     await insertAttachment(owner, lesson, file(key), 10);
-    expect(await attachmentKeysForLessons(owner, [lesson])).toEqual([key]);
-    await deleteLessons(owner, lesson, "this");
-    expect((await existingAttachmentKeys([key])).has(key)).toBe(false);
+    expect(await deleteLessons(owner, lesson, "this")).toEqual({ deleted: 1, attachmentKeys: [key] });
   });
 
   it("disk store writes, reads, refuses overwrite and rejects non-UUID keys", async () => {

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, count, eq, inArray } from "drizzle-orm";
+import { and, asc, count, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { lessonAttachments, lessons } from "@/db/schema";
 
@@ -30,19 +30,4 @@ export async function deleteOwnedAttachment(studentId: string, attachmentId: str
   const [row] = await getDb().delete(lessonAttachments).where(and(eq(lessonAttachments.id, attachmentId), eq(lessonAttachments.studentId, studentId)))
     .returning({ storageKey: lessonAttachments.storageKey });
   return row?.storageKey ?? null;
-}
-
-/** Storage keys of the files on these lessons, read before the lessons are deleted (rows cascade, bytes do not). */
-export async function attachmentKeysForLessons(studentId: string, lessonIds: string[]) {
-  if (lessonIds.length === 0) return [];
-  const rows = await getDb().select({ storageKey: lessonAttachments.storageKey }).from(lessonAttachments)
-    .where(and(eq(lessonAttachments.studentId, studentId), inArray(lessonAttachments.lessonId, lessonIds)));
-  return rows.map((row) => row.storageKey);
-}
-
-/** Keys whose rows are gone (e.g. their lesson was deleted); the store can then drop the bytes. */
-export async function existingAttachmentKeys(keys: string[]) {
-  if (keys.length === 0) return new Set<string>();
-  const rows = await getDb().select({ storageKey: lessonAttachments.storageKey }).from(lessonAttachments).where(inArray(lessonAttachments.storageKey, keys));
-  return new Set(rows.map((row) => row.storageKey));
 }

@@ -20,6 +20,7 @@ Nada foi publicado. Este guia descreve o que já está pronto no código e os pa
 | `BETTER_AUTH_URL` | sim | `https://<domínio>` exato, sem barra final |
 | `BETTER_AUTH_SECRET` | sim | `npx auth secret`; nunca reutilizar o de desenvolvimento |
 | `LOG_LEVEL` | não | `info` por padrão |
+| `ATTACHMENTS_DIR` | se usar anexos | Pasta persistente para os arquivos; ver nota abaixo |
 
 Nunca usar `NEXT_PUBLIC_*` para estes valores.
 
@@ -33,6 +34,10 @@ Nunca usar `NEXT_PUBLIC_*` para estes valores.
 6. Confirmar que o proxy da hospedagem **sobrescreve** `x-forwarded-for`/`x-real-ip`; o limite de tentativas usa o IP desses cabeçalhos. Em hospedagem própria, colocar o app atrás de um proxy que faça isso.
 7. Teste de fumaça: `/`, `/entrar`, cadastro, login, criar aula, `/vinculos`, `/professor`, `/aprendizagem`, `/api/exportar` (com sessão) e `/manifest.webmanifest`.
 8. Ativar backups automáticos e testar um restauro antes de convidar utilizadores reais.
+
+## Anexos
+
+O armazenamento padrão é disco local. Em servidor próprio ou contêiner com volume persistente, apontar `ATTACHMENTS_DIR` para esse volume e incluí-lo nos backups. Em hospedagem sem disco persistente (Vercel e semelhantes), é preciso implementar um `AttachmentStore` S3-compatível (interface em `src/features/attachments/store.ts`, uma única função a trocar em `getAttachmentStore`) antes de usar anexos; sem isso os envios falham.
 
 ## Antes de abrir ao público (pendente)
 

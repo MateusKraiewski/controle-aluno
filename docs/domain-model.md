@@ -65,7 +65,7 @@ Separar **estado da aula** (planned/completed/cancelled/rescheduled) de **estado
 
 ## Modelo implementado hoje
 
-`user`, `subjects(student_id, name, color)`, `lesson_series`, `lessons(student_id, subject_id, series_id, original_lesson_date, lesson_date, starts_at, ends_at, status, cancellation_reason, cancelled_at, is_exception, planned/studied_content, attendance, attendance_note, attendance_recorded_by/at)` e tabelas Better Auth; migrations `0000`–`0017`. Há criação de aulas avulsas e séries semanais/quinzenais (até 300 ocorrências, atomicidade, timezone da série) e autoria/hora do estado aluno.
+`user`, `subjects(student_id, name, color)`, `lesson_series`, `lessons(student_id, subject_id, series_id, original_lesson_date, lesson_date, starts_at, ends_at, status, cancellation_reason, cancelled_at, is_exception, planned/studied_content, attendance, attendance_note, attendance_recorded_by/at)` e tabelas Better Auth; migrations `0000`–`0018`. Há criação de aulas avulsas e séries semanais/quinzenais (até 300 ocorrências, atomicidade, timezone da série) e autoria/hora do estado aluno.
 
 **Estado da aula separado da presença (0008):** `status` é `planned` ou `cancelled`; cancelar guarda motivo e momento, nunca altera `attendance` e a aula cancelada não aceita registro de presença. Reativar volta a `planned`.
 
@@ -81,7 +81,9 @@ Separar **estado da aula** (planned/completed/cancelled/rescheduled) de **estado
 
 **Divisão de série (esta e as próximas):** ao editar uma ocorrência atual ou futura que não é exceção, a regra original passa a terminar no dia anterior e uma nova regra, com os novos horários/conteúdo, começa nessa data; as ocorrências não tocadas a partir dela passam para a nova regra. Ocorrências passadas, registradas, canceladas ou exceções mantêm a regra que as gerou.
 
-**Ainda dependentes de decisão de produto (não implementados de propósito):** aulas em grupo (o roadmap pede "decidir aula individual/grupo" antes de modelar participantes múltiplos) e anexos/materiais (dependem da escolha de storage e da política de retenção, que precedem anexos no caminho crítico do roadmap). Notificações também ficam para depois.
+**Anexos (0018) — decisão provisória de 21/10/2026, para revisão do Mateus:** `lesson_attachments` guarda só metadados (nome sanitizado, tipo detectado pelo conteúdo, tamanho, chave de armazenamento) de arquivos que o aluno anexa às próprias aulas. Escolhas conservadoras e reversíveis: PDF, PNG, JPEG, WebP e texto simples; até 5 MB por arquivo e 10 por aula; 30 envios por hora por conta; privados ao aluno (o professor não vê); retenção enquanto a aula ou o anexo existir (excluir um ou outro apaga os bytes). Os bytes ficam atrás da interface `AttachmentStore` (`src/features/attachments/store.ts`); a implementação atual é disco local (`ATTACHMENTS_DIR`, padrão `.local/attachments`). Um adaptador S3-compatível ainda não existe: hospedagens sem disco persistente (ex.: Vercel) precisam dele antes de ativar anexos. Downloads saem sempre como `attachment`, com `nosniff` e CSP `sandbox`.
+
+**Aulas em grupo — ainda não implementadas, aguardando decisão:** hoje cada aula pertence a um aluno e o professor vê aulas de vários alunos lado a lado na área docente. Uma aula em grupo de verdade exige decidir quem é dono da ocorrência (professor ou cada aluno), como a presença e a divergência funcionam por participante e o que um aluno vê dos colegas — regras de presença e vínculo que o `AGENTS.md` proíbe inventar. Fica registrado como decisão pendente do roadmap ("decidir aula individual/grupo"); notificações também ficam para depois.
 
 **Registro pós-aula (0013):** além do conteúdo estudado, cada aula guarda `private_note` e `next_step`, escritos só pelo aluno e nunca incluídos nas consultas do professor.
 

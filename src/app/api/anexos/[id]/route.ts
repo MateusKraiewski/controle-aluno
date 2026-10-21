@@ -3,8 +3,12 @@ import { z } from "zod";
 import { deleteOwnedAttachment, getOwnedAttachment } from "@/features/attachments/repository";
 import { getAttachmentStore } from "@/features/attachments/store";
 import { auth } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
+
+/** RFC 8187 attr-chars: encodeURIComponent plus the characters it leaves alone. */
+const encodeRfc8187 = (value: string) => encodeURIComponent(value).replace(/['()*!]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`);
 
 async function owner() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -22,7 +26,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   return new Response(new Blob([bytes as Uint8Array<ArrayBuffer>]), {
     headers: {
       "content-type": attachment.contentType,
-      "content-disposition": `attachment; filename*=UTF-8''${encodeURIComponent(attachment.fileName)}`,
+      "content-disposition": `attachment; filename*=UTF-8''${encodeRfc8187(attachment.fileName)}`,
       "x-content-type-options": "nosniff",
       "content-security-policy": "default-src 'none'; sandbox",
       "cache-control": "private, no-store",
@@ -36,6 +40,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   if (!studentId || !id.success) return Response.json({ ok: false }, { status: 404 });
   const storageKey = await deleteOwnedAttachment(studentId, id.data);
   if (!storageKey) return Response.json({ ok: false }, { status: 404 });
-  await getAttachmentStore().delete(storageKey);
+  // The row is gone either way; a leftover file has no row pointing to it and is never served.
+  try { await getAttachmentStore().delete(storageKey); } catch { logger.warn({ code: "attachment_bytes_not_deleted" }, "Attachment bytes kept after row delete"); }
   return Response.json({ ok: true });
 }

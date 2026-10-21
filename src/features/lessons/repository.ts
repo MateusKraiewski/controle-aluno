@@ -1,7 +1,7 @@
 import "server-only";
 import { and, asc, eq, gt, gte, inArray, lt, lte, ne, notInArray, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
-import { lessonSeries, lessons, subjects } from "@/db/schema";
+import { lessonAttachments, lessonSeries, lessons, subjects } from "@/db/schema";
 import { learningObjectives, lessonObjectives } from "@/db/schema/learning";
 
 type Db = ReturnType<typeof getDb>;
@@ -209,6 +209,9 @@ export async function deleteLessons(studentId: string, lessonId: string, scope: 
     const siblings = siblingFilter(studentId, target, scope);
     const siblingIds = siblings ? (await tx.select({ id: lessons.id }).from(lessons).where(siblings).for("update")).map((row) => row.id) : [];
     const ids = [target.id, ...siblingIds];
+    // Lessons are locked, so no upload can slip in; the caller removes these bytes after commit.
+    const attachmentKeys = (await tx.select({ storageKey: lessonAttachments.storageKey }).from(lessonAttachments)
+      .where(and(eq(lessonAttachments.studentId, studentId), inArray(lessonAttachments.lessonId, ids)))).map((row) => row.storageKey);
     // A make-up lesson outlives the deleted original; only the link is dropped.
     await tx.update(lessons).set({ replacesLessonId: null, updatedAt: new Date() })
       .where(and(eq(lessons.studentId, studentId), inArray(lessons.replacesLessonId, ids)));
@@ -219,7 +222,7 @@ export async function deleteLessons(studentId: string, lessonId: string, scope: 
         .where(and(eq(lessons.seriesId, target.seriesId), eq(lessons.studentId, studentId))).limit(1);
       if (!remaining) await tx.delete(lessonSeries).where(and(eq(lessonSeries.id, target.seriesId), eq(lessonSeries.studentId, studentId)));
     }
-    return { deleted: removed.length + 1 };
+    return { deleted: removed.length + 1, attachmentKeys };
   });
 }
 

@@ -30,7 +30,8 @@ export function AttachmentsSection({ lessonId, attachments, t, onMessage }: { le
       const response = await fetch(`/api/anexos/${id}`, { method: "DELETE" });
       onMessage(t(response.ok ? "Anexo excluído." : "Não foi possível excluir o anexo."));
       if (response.ok) router.refresh();
-    } finally { setBusy(false); }
+    } catch { onMessage(t("Não foi possível excluir o anexo.")); }
+    finally { setBusy(false); }
   }
 
   return <div className="attachments">

@@ -2,18 +2,18 @@
 
 Atualizado em 20/10/2026. O percentual mede o avanço dos marcos planeados para o produto, com pesos de escopo. Não significa que o produto esteja pronto para produção.
 
-**Progresso ponderado: 79%.** Fórmula: soma de (peso da etapa × conclusão estimada da etapa).
+**Progresso ponderado: 80%.** Fórmula: soma de (peso da etapa × conclusão estimada da etapa).
 
-[████████████████████](#product-and-architecture-20) [██████████████████████████████████░░░░░░](#student-planner-40) [██████████████░░░░░░](#teacher-collaboration-20) [██████░░░░](#learning-support-10) [█████░░░░░](#quality-and-release-10)
+[████████████████████](#product-and-architecture-20) [██████████████████████████████████░░░░░░](#student-planner-40) [██████████████░░░░░░](#teacher-collaboration-20) [███████░░░](#learning-support-10) [█████░░░░░](#quality-and-release-10)
 
 | Etapa | Peso | Conclusão | Contribuição |
 |---|---:|---:|---:|
 | Product and architecture | 20% | 100% | 20 p.p. |
 | Student planner | 40% | 86% | 34,4 p.p. |
 | Teacher collaboration | 20% | 70% | 14 p.p. |
-| Learning support | 10% | 60% | 6 p.p. |
+| Learning support | 10% | 70% | 7 p.p. |
 | Quality and release | 10% | 50% | 5 p.p. |
-| **Total** | **100%** |  | **79,4% → 79%** |
+| **Total** | **100%** |  | **80,4% → 80%** |
 
 ## Product and architecture (20%)
 
@@ -35,9 +35,9 @@ Atualizado em 20/10/2026. O percentual mede o avanço dos marcos planeados para 
 
 ## Learning support (10%)
 
-**Parcial (60%).** Objetivos por matéria com estado, ligação às aulas em que foram trabalhados, sugestões de revisão explicáveis e dispensáveis (sem notas nem scores) e exportação CSV do histórico.
+**Parcial (70%).** Inclui anexos privados por aula (PDF, imagem, texto). Objetivos por matéria com estado, ligação às aulas em que foram trabalhados, sugestões de revisão explicáveis e dispensáveis (sem notas nem scores) e exportação CSV do histórico.
 
-**Falta:** materiais/anexos (depende de storage), tarefas com prazo, visão de evolução por período e sugestões assistidas (só com consentimento).
+**Falta:** adaptador de armazenamento S3 para hospedagem sem disco, tarefas com prazo, visão de evolução por período e sugestões assistidas (só com consentimento).
 
 ## Quality and release (10%)
 

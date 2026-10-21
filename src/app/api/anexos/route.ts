@@ -11,6 +11,25 @@ export const dynamic = "force-dynamic";
 
 const fail = (status: number, error: string) => Response.json({ ok: false, error }, { status });
 
+/** Reads the body but stops as soon as it exceeds the limit, even when Content-Length is missing or wrong. */
+async function readLimited(request: Request, limit: number): Promise<Uint8Array<ArrayBuffer> | "too_large"> {
+  const reader = request.body?.getReader();
+  if (!reader) return new Uint8Array();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > limit) { await reader.cancel(); return "too_large"; }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+  return bytes;
+}
+
 /** Uploads one file to the student's own lesson (multipart: lessonId, file). */
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -18,8 +37,11 @@ export async function POST(request: Request) {
   // Reject oversized bodies before reading them (form overhead allowed).
   if (Number(request.headers.get("content-length") ?? 0) > MAX_ATTACHMENT_BYTES + 64 * 1024) return fail(413, "O arquivo precisa ter até 5 MB.");
   if (!await consumeRateLimit(`attachment-upload:${session.user.id}`, 30, 60 * 60)) return fail(429, "Muitas tentativas. Aguarde alguns minutos e tente novamente.");
+  const body = await readLimited(request, MAX_ATTACHMENT_BYTES + 64 * 1024);
+  if (body === "too_large") return fail(413, "O arquivo precisa ter até 5 MB.");
   let form: FormData;
-  try { form = await request.formData(); } catch { return fail(400, "Envie um arquivo."); }
+  try { form = await new Response(body, { headers: { "content-type": request.headers.get("content-type") ?? "" } }).formData(); }
+  catch { return fail(400, "Envie um arquivo."); }
   const lessonId = z.uuid().safeParse(form.get("lessonId"));
   const file = form.get("file");
   if (!lessonId.success || !(file instanceof File)) return fail(400, "Envie um arquivo.");
