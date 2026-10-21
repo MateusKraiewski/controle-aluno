@@ -127,6 +127,13 @@
       "when": 1792544673197,
       "tag": "0017_resolution_per_pair",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792544994601,
+      "tag": "0018_lesson_attachments",
+      "breakpoints": true
     }
   ]
 }

@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import StudentDashboard, { type DashboardLesson } from "@/components/student-dashboard";
 import { auth } from "@/lib/auth";
 import { listLessonsForStudent } from "@/features/lessons/repository";
+import { listAttachmentsForStudent } from "@/features/attachments/repository";
 import { latestResolutions, listTeacherRecordsForStudent, resolutionKey } from "@/features/collaboration/repository";
 import { toResolutionState } from "@/features/collaboration/resolution-view";
 import { reportsDiffer } from "@/features/collaboration/divergence";
@@ -20,7 +21,9 @@ export default async function Home() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return <StudentDashboard key="demo" />;
 
-  const [rows, teacherRecords] = await Promise.all([listLessonsForStudent(session.user.id), listTeacherRecordsForStudent(session.user.id)]);
+  const [rows, teacherRecords, attachments] = await Promise.all([listLessonsForStudent(session.user.id), listTeacherRecordsForStudent(session.user.id), listAttachmentsForStudent(session.user.id)]);
+  const attachmentsByLesson = new Map<string, DashboardLesson["attachments"]>();
+  for (const file of attachments) attachmentsByLesson.set(file.lessonId, [...(attachmentsByLesson.get(file.lessonId) ?? []), { id: file.id, fileName: file.fileName, sizeBytes: file.sizeBytes }]);
 
   const byId = new Map(rows.map((row) => [row.id, row]));
   const resolutions = await latestResolutions([...new Set(teacherRecords.map((record) => record.lessonId))]);
@@ -52,6 +55,7 @@ export default async function Home() {
     replaces: row.replacesLessonId && byId.has(row.replacesLessonId) ? { id: row.replacesLessonId, date: byId.get(row.replacesLessonId)!.date } : null,
     replacedBy: replacedBy.get(row.id) ?? null,
     teacherRecords: recordsByLesson.get(row.id) ?? [],
+    attachments: attachmentsByLesson.get(row.id) ?? [],
     ...lessonResolution(recordsByLesson.get(row.id) ?? [], (linkId) => resolutions.get(resolutionKey(row.id, linkId)), session.user.id),
   }));
 

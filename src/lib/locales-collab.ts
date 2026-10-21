@@ -149,6 +149,18 @@ const table: Record<string, [string, string, string]> = {
   "Proposta não encontrada.": ["Proposta não encontrada.","Proposal not found.","Propuesta no encontrada."],
   "Não foi possível responder. Tente novamente.": ["Não foi possível responder. Tente novamente.","Could not answer. Please try again.","No se pudo responder. Inténtalo de nuevo."],
   "Esta divergência já tem um resultado combinado.": ["Esta divergência já tem um resultado combinado.", "This difference already has an agreed outcome.", "Esta diferencia ya tiene un resultado acordado."],
+  "Anexo salvo.": ["Anexo guardado.","Attachment saved.","Adjunto guardado."],
+  "Anexo excluído.": ["Anexo eliminado.","Attachment deleted.","Adjunto eliminado."],
+  "Não foi possível salvar o anexo. Tente novamente.": ["Não foi possível guardar o anexo. Tente novamente.","Could not save the attachment. Please try again.","No se pudo guardar el adjunto. Inténtalo de nuevo."],
+  "Não foi possível excluir o anexo.": ["Não foi possível eliminar o anexo.","Could not delete the attachment.","No se pudo eliminar el adjunto."],
+  "Excluir anexo": ["Eliminar anexo","Delete attachment","Eliminar adjunto"],
+  "Anexar arquivo": ["Anexar ficheiro","Attach file","Adjuntar archivo"],
+  "PDF, imagem ou texto, até 5 MB. Só você vê os anexos.": ["PDF, imagem ou texto, até 5 MB. Só o aluno vê os anexos.","PDF, image or text, up to 5 MB. Only you see attachments.","PDF, imagen o texto, hasta 5 MB. Solo tú ves los adjuntos."],
+  "Entre na sua conta para anexar arquivos.": ["Inicie sessão para anexar ficheiros.","Sign in to attach files.","Inicia sesión para adjuntar archivos."],
+  "O arquivo precisa ter até 5 MB.": ["O ficheiro tem de ter até 5 MB.","The file must be 5 MB or smaller.","El archivo debe tener hasta 5 MB."],
+  "Envie um arquivo.": ["Envie um ficheiro.","Send a file.","Envía un archivo."],
+  "Use PDF, PNG, JPEG, WebP ou texto simples.": ["Use PDF, PNG, JPEG, WebP ou texto simples.","Use PDF, PNG, JPEG, WebP or plain text.","Usa PDF, PNG, JPEG, WebP o texto plano."],
+  "Cada aula aceita até 10 anexos.": ["Cada aula aceita até 10 anexos.","Each lesson accepts up to 10 attachments.","Cada clase admite hasta 10 adjuntos."],
   "Vínculo não encontrado.": ["Ligação não encontrada.", "Link not found.", "Vínculo no encontrado."],
 };
 

@@ -93,7 +93,7 @@ export function LessonDialog({ mode, persisted, locale, existing, onClose, onLoc
         onLocalChange((lessons) => lessons.map((lesson) => lesson.id === editing.id ? { ...lesson, subject: draft.subject, plannedContent: draft.topic, date: fromDateKey(draft.date, draft.startsAt), time: draft.startsAt, endTime: draft.endsAt } : lesson));
         onDone(t("Aula alterada nesta demonstração.")); return;
       }
-      const created = dates.map((key, index): Lesson => ({ id: `demo-${Date.now()}-${index}`, subject: draft.subject, date: fromDateKey(key, draft.startsAt), time: draft.startsAt, endTime: draft.endsAt, plannedContent: draft.topic, studiedContent: null, privateNote: null, nextStep: null, teacher: "Professor(a) a definir", status: "upcoming", isSeries: dates.length > 1, isException: false, cancellationReason: null, replaces: null, replacedBy: null, teacherRecords: [], divergent: false, resolution: null }));
+      const created = dates.map((key, index): Lesson => ({ id: `demo-${Date.now()}-${index}`, subject: draft.subject, date: fromDateKey(key, draft.startsAt), time: draft.startsAt, endTime: draft.endsAt, plannedContent: draft.topic, studiedContent: null, privateNote: null, nextStep: null, teacher: "Professor(a) a definir", status: "upcoming", isSeries: dates.length > 1, isException: false, cancellationReason: null, replaces: null, replacedBy: null, teacherRecords: [], divergent: false, resolution: null, attachments: [] }));
       onLocalChange((lessons) => [...lessons, ...created]);
       onDone(t("Aula adicionada à demonstração desta sessão. Crie uma conta para salvar seus registros.")); return;
     }

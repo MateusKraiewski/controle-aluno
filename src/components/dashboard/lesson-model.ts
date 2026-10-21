@@ -13,7 +13,9 @@ export type DashboardLesson = {
   teacherRecords: TeacherRecord[];
   /** The reports disagree and an agreed outcome can be proposed; see features/collaboration/divergence. */
   divergent: boolean; resolution: ResolutionState;
+  attachments: LessonAttachment[];
 };
+export type LessonAttachment = { id: string; fileName: string; sizeBytes: number };
 export type TeacherRecord = { teacherName: string; attendance: "present" | "absent" | "excused"; linkId: string; active: boolean; divergent: boolean };
 export type LessonLink = { id: string; date: string };
 export type Lesson = Omit<DashboardLesson, "date"> & { date: Date };
@@ -30,7 +32,7 @@ export function dateAt(offset: number, time: string) {
 }
 
 function demoLesson(id: string, subject: string, offset: number, time: string, endTime: string, plannedContent: string, teacher: string, status: Status): Lesson {
-  return { id, subject, date: dateAt(offset, time), time, endTime, plannedContent, studiedContent: null, privateNote: null, nextStep: null, teacher, status, isSeries: false, isException: false, cancellationReason: null, replaces: null, replacedBy: null, teacherRecords: [], divergent: false, resolution: null };
+  return { id, subject, date: dateAt(offset, time), time, endTime, plannedContent, studiedContent: null, privateNote: null, nextStep: null, teacher, status, isSeries: false, isException: false, cancellationReason: null, replaces: null, replacedBy: null, teacherRecords: [], divergent: false, resolution: null, attachments: [] };
 }
 
 export function demoLessons(): Lesson[] {

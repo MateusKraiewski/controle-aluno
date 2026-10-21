@@ -5,6 +5,8 @@ import { refresh } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { getProfileTimeZone } from "@/features/profile/repository";
+import { attachmentKeysForLessons, existingAttachmentKeys } from "@/features/attachments/repository";
+import { getAttachmentStore } from "@/features/attachments/store";
 import { civilToday, isValidTimeZone } from "@/features/profile/time-zone";
 import { generateWeeklyDates } from "@/features/calendar/domain";
 import {
@@ -159,8 +161,13 @@ export async function removeLesson(lessonId: string, scope: unknown) {
   const parsedScope = scopeSchema.safeParse(scope);
   if (!id.success || !parsedScope.success) return { ok: false as const, error: "Confira os dados da exclusão." };
   try {
+    // Attachment rows cascade with their lesson; the bytes are removed from the store afterwards.
+    const scoped = await listScopeTargets(studentId, id.data, parsedScope.data);
+    const keys = await attachmentKeysForLessons(studentId, (scoped ?? []).map((lesson) => lesson.id));
     const result = await deleteLessons(studentId, id.data, parsedScope.data);
     if (!result) return { ok: false as const, error: "Aula não encontrada." };
+    const kept = await existingAttachmentKeys(keys);
+    await Promise.all(keys.filter((key) => !kept.has(key)).map((key) => getAttachmentStore().delete(key).catch(() => undefined)));
     refresh();
     return { ok: true as const, deleted: result.deleted };
   } catch { return { ok: false as const, error: "Não foi possível excluir a aula. Tente novamente." }; }

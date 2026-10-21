@@ -4,6 +4,7 @@ import {
   check,
   foreignKey,
   index,
+  integer,
   pgEnum,
   pgTable,
   smallint,
@@ -136,3 +137,24 @@ export const profiles = pgTable("profiles", {
   timeZone: text("time_zone").notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Files the student attaches to their own lesson; bytes live in the attachment store, never in the database. */
+export const lessonAttachments = pgTable(
+  "lesson_attachments",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    studentId: text("student_id").notNull().references(() => user.id),
+    lessonId: uuid("lesson_id").notNull(),
+    storageKey: text("storage_key").notNull(),
+    fileName: text("file_name").notNull(),
+    contentType: text("content_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("lesson_attachments_storage_key_unique").on(table.storageKey),
+    index("lesson_attachments_lesson_idx").on(table.lessonId),
+    foreignKey({ name: "lesson_attachments_lesson_fk", columns: [table.lessonId, table.studentId], foreignColumns: [lessons.id, lessons.studentId] }).onDelete("cascade"),
+    check("lesson_attachments_size_positive", sql`${table.sizeBytes} > 0`),
+  ],
+);

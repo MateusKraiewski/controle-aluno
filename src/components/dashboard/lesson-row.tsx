@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { updateStudyRecord } from "@/app/actions/lessons";
 import { ResolutionBox } from "@/components/collaboration/resolution-box";
+import { AttachmentsSection } from "./attachments-section";
 import { translate, type Locale } from "@/lib/locales";
 import { formatDate, lessonSummary, statusLabels, type AttendanceStatus, type Lesson, type Status } from "./lesson-model";
 
@@ -56,6 +57,7 @@ export function LessonRow({ lesson, editable, locale, persisted = false, onChang
           <label>{t("Nota privada (só você vê)")}<textarea value={draft.privateNote} onChange={(event) => { const value = event.target.value; setDraft((current) => ({ ...current, privateNote: value })); }} maxLength={2000} rows={2} /></label>
           <button className="text-button" type="submit">{t("Salvar registro")}</button><button className="text-button" type="button" onClick={() => { setDraft(recordDraft(lesson)); setEditingContent(false); }}>{t("Cancelar")}</button></form>
         : <button className="text-button" type="button" onClick={() => setEditingContent(true)}>{t(lesson.studiedContent || lesson.privateNote || lesson.nextStep ? "Editar registro da aula" : "Registrar o que foi estudado")}</button> : null}
+      {persisted ? <AttachmentsSection lessonId={lesson.id} attachments={lesson.attachments} t={t} onMessage={setContentNotice} /> : null}
       {onOpen ? <button className="text-button" type="button" onClick={onOpen}>{t("Editar ou cancelar aula")}</button> : null}
       {contentNotice ? <span className="study-record-notice" role="status">{contentNotice}</span> : null}
     </div> : null}
